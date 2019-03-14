@@ -1,0 +1,216 @@
+<html>
+
+<head>
+	<style>
+		.svg_main {
+			width: 100%;
+			height: 100%;
+			/* border: 3px solid red; */
+		}
+
+		#left {
+			width: 200px;
+			height: 100px;
+			background: lightslategray;
+			border-radius: 15px;
+			float: left;
+			margin-right: 300px;
+		}
+
+		#right1,
+		#right2,
+		#right3,
+		#right4 {
+			width: 200px;
+			height: 100px;
+			background: lightblue;
+			border-radius: 15px;
+			display: block;
+			margin-top: 50px;
+			margin-left: 500px;
+		}
+	</style>
+</head>
+
+<body>
+	<!-- <div> -->
+	<!-- <svg viewBox="0 0 400 400" class="svg_main">
+			<rect rx="25" ry="25" x="25" y="25" width="200" height="200" fill="lightgreen" />
+			<circle r="120" cx="150" cy="150" fill="none" stroke="red" stroke-width="5" />
+			<circle r="150" cx="150" cy="150" fill="none" stroke="green" stroke-width="5" />
+			<line x1="20" y1="20" x2="200" y2="200" stroke="blue" stroke-width="3" />
+			<polygon fill="pink" points="50,40 125,125 200,40 200,190 125,125" />
+			<defs>
+				<marker id="triangle" viewBox="0 0 10 10" refX="0" refY="5" markerUnits="strokeWidth" markerWidth="10" markerHeight="8"
+				 orient="auto">
+					<path d="M 0 0 L 10 5 L 0 10 z"></path>
+				</marker>
+			</defs>
+			<path xmlns="http://www.w3.org/2000/svg" d="M 0 0 L 10 5 L 0 10 z" stroke="black" fill="black" marker-end="url(#triangle)" />
+		</svg> -->
+
+	<!-- <svg class="svg_main">
+			<defs>
+				<pattern id="smallGrid" width="8" height="8" patternUnits="userSpaceOnUse">
+					<path d="M 8 0 L 0 0 0 8" fill="none" stroke="gray" stroke-width="0.5" />
+				</pattern>
+				<pattern id="grid" width="80" height="80" patternUnits="userSpaceOnUse">
+					<rect width="80" height="80" fill="url(#smallGrid)" />
+					<path d="M 80 0 L 0 0 0 80" fill="none" stroke="gray" stroke-width="1" />
+				</pattern>
+			</defs>
+			<rect width="100%" height="100%" fill="url(#grid)" />
+		</svg> -->
+
+	<!-- </div> -->
+	<div>
+		<div id="left"></div>
+	</div>
+	<div>
+		<div id="right1"></div>
+		<div id="right2"></div>
+		<div id="right3"></div>
+		<div id="right4"></div>
+	</div>
+</body>
+
+<script>
+	function createSVG() {
+		var svg = document.getElementById("svg-canvas");
+		if (null == svg) {
+			svg = document.createElementNS("http://www.w3.org/2000/svg",
+				"svg");
+			svg.setAttribute('id', 'svg-canvas');
+			svg.setAttribute('style', 'position:absolute;top:0px;left:0px');
+			svg.setAttribute('width', document.body.clientWidth);
+			svg.setAttribute('height', document.body.clientHeight);
+			svg.setAttributeNS("http://www.w3.org/2000/xmlns/",
+				"xmlns:xlink",
+				"http://www.w3.org/1999/xlink");
+			document.body.appendChild(svg);
+		}
+		return svg;
+	}
+
+	function drawCircle(x, y, radius, color) {
+		var svg = createSVG();
+		var shape = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+		shape.setAttributeNS(null, "cx", x);
+		shape.setAttributeNS(null, "cy", y);
+		shape.setAttributeNS(null, "r", radius);
+		shape.setAttributeNS(null, "fill", color);
+		svg.appendChild(shape);
+	}
+
+	function findAbsolutePosition(htmlElement) {
+		var x = htmlElement.offsetLeft;
+		var y = htmlElement.offsetTop;
+		for (var x = 0, y = 0, el = htmlElement;
+			el != null;
+			el = el.offsetParent) {
+			x += el.offsetLeft;
+			y += el.offsetTop;
+		}
+		return {
+			"x": x,
+			"y": y
+		};
+	}
+
+	function connectDivs(leftId, rightId, color, tension) {
+		var left = document.getElementById(leftId);
+		var right = document.getElementById(rightId);
+
+		var leftPos = findAbsolutePosition(left);
+		var x1 = leftPos.x;
+		var y1 = leftPos.y;
+		x1 += left.offsetWidth;
+		y1 += (left.offsetHeight / 2);
+
+		var rightPos = findAbsolutePosition(right);
+		var x2 = rightPos.x;
+		var y2 = rightPos.y;
+		y2 += (right.offsetHeight / 2);
+
+		var width = x2 - x1;
+		var height = y2 - y1;
+
+		// drawCircle(x1, y1, 3, color);
+		// drawCircle(x2, y2, 3, color);
+		createTriangleMarker();
+		drawCurvedLine(x1, y1, x2, y2, color, tension);
+	}
+
+	markerInitialized = false;
+
+	function createTriangleMarker() {
+		if (markerInitialized)
+			return;
+		markerInitialized = true;
+		var svg = createSVG();
+		var defs = document.createElementNS('http://www.w3.org/2000/svg',
+			'defs');
+		svg.appendChild(defs);
+
+		var marker = document.createElementNS('http://www.w3.org/2000/svg',
+			'marker');
+		marker.setAttribute('id', 'triangle');
+		marker.setAttribute('viewBox', '0 0 10 10');
+		marker.setAttribute('refX', '0');
+		marker.setAttribute('refY', '5');
+		marker.setAttribute('markerUnits', 'strokeWidth');
+		marker.setAttribute('markerWidth', '10');
+		marker.setAttribute('markerHeight', '8');
+		marker.setAttribute('orient', 'auto');
+		var path = document.createElementNS('http://www.w3.org/2000/svg',
+			'path');
+		marker.appendChild(path);
+		path.setAttribute('d', 'M 0 0 L 10 5 L 0 10 z');
+		defs.appendChild(marker);
+		// and the same for the start arrowhead (180° rotated)
+	}
+
+
+	function drawCurvedLine(x1, y1, x2, y2, color, tension) {
+		var svg = createSVG();
+		var shape = document.createElementNS("http://www.w3.org/2000/svg", "path");
+		if (tension < 0) {
+			var delta = (y2 - y1) * tension;
+			var hx1 = x1;
+			var hy1 = y1 - delta;
+			var hx2 = x2;
+			var hy2 = y2 + delta;
+			var path = "M " + x1 + " " + y1 +
+				" C " + hx1 + " " + hy1 + " "
+				+ hx2 + " " + hy2 + " "
+				+ x2 + " " + y2;
+		} else {
+			var delta = (x2 - x1) * tension;
+			var hx1 = x1 + delta;
+			var hy1 = y1;
+			var hx2 = x2 - delta;
+			var hy2 = y2;
+			var path = "M " + x1 + " " + y1 +
+				" C " + hx1 + " " + hy1 + " "
+				+ hx2 + " " + hy2 + " "
+				+ x2 + " " + y2;
+		}
+
+		shape.setAttributeNS(null, "d", path);
+		shape.setAttributeNS(null, "fill", "none");
+		shape.setAttributeNS(null, "stroke", color);
+
+		shape.setAttributeNS(null, "marker-start", "url(#trianglebackwards)");
+		shape.setAttributeNS(null, "marker-end", "url(#triangle)");
+
+		svg.appendChild(shape);
+	}
+
+	connectDivs("left", "right1", "blue", 0.2);
+	connectDivs("left", "right2", "blue", 0.2);
+	connectDivs("left", "right3", "blue", 0.0);
+	connectDivs("left", "right4", "green", -0.5);
+
+</script>
+
+</html>

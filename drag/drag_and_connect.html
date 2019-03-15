@@ -1,0 +1,127 @@
+<html>
+
+<head>
+	<style>
+		.example {
+			border: 2px solid red;
+		}
+
+		.static {
+			cursor: not-allowed;
+		}
+
+		.draggable {
+			cursor: move;
+		}
+
+		#connection {
+			stroke-width: 0.1;
+			stroke: red;
+		}
+	</style>
+</head>
+
+<body>
+	<svg class="example" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20" onload="makeDraggable(evt)">
+		<rect id="rect1" class="draggable" x="4" y="5" width="8" height="10" fill="#007bff" />
+		<rect id="rect2" class="draggable" x="18" y="5" width="8" height="10" fill="#3ff" />
+		<line id="connection" />
+		<line id="svgline" x1="1" y1="5" x2="20" y2="15" stroke="green" stroke-width="0.05"/>
+	</svg>
+
+	<script>
+		var rect1 = document.getElementById('rect1');
+		var rect2 = document.getElementById('rect2');
+		var cxn = document.getElementById('connection');
+
+		function getIntersection(dx, dy, cx, cy, w, h) {
+			if (Math.abs(dy / dx) < h / w) {
+				return [cx + (dx > 0 ? w : -w), cy + dy * w / Math.abs(dx)]
+			} else {
+				return [cx + dx * h / Math.abs(dy), cy + (dy > 0 ? h : -h)]
+			}
+		}
+
+		function updateConnection() {
+			var x1 = parseFloat(rect1.getAttributeNS(null, 'x'));
+			var y1 = parseFloat(rect1.getAttributeNS(null, 'y'));
+			var x2 = parseFloat(rect2.getAttributeNS(null, 'x'));
+			var y2 = parseFloat(rect2.getAttributeNS(null, 'y'));
+
+			var w1 = parseFloat(rect1.getAttributeNS(null, 'width')) / 2;
+			var h1 = parseFloat(rect1.getAttributeNS(null, 'height')) / 2;
+			var w2 = parseFloat(rect2.getAttributeNS(null, 'width')) / 2;
+			var h2 = parseFloat(rect2.getAttributeNS(null, 'height')) / 2;
+
+			var cx1 = x1 + w1;
+			var cy1 = y1 + h1;
+			var cx2 = x2 + w2;
+			var cy2 = y2 + h2;
+
+			var dx = cx2 - cx1;
+			var dy = cy2 - cy1;
+
+			var p1, p2;
+			if (!dx) {
+				p1 = [cx1, y1 + h2 * 2];
+				p2 = [cx1, y2];
+			} else {
+				p1 = getIntersection(dx, dy, cx1, cy1, w1, h1);
+				p2 = getIntersection(-dx, -dy, cx2, cy2, w2, h2);
+			}
+
+			cxn.setAttributeNS(null, 'x1', p1[0]);
+			cxn.setAttributeNS(null, 'y1', p1[1]);
+			cxn.setAttributeNS(null, 'x2', p2[0]);
+			cxn.setAttributeNS(null, 'y2', p2[1]);
+		}
+
+		function makeDraggable(evt) {
+			var svg = evt.target;
+			// svg.addEventListener('mouseover', showPoints);
+			svg.addEventListener('mousedown', startDrag);
+			svg.addEventListener('mousemove', drag);
+			svg.addEventListener('mouseup', endDrag);
+			// svg.addEventListener('mouseleave', endDrag);
+
+			var selectedElement, offset;
+
+			function startDrag(evt) {
+				if (evt.target.classList.contains('draggable')) {
+					console.log('Starting drag...');
+					selectedElement = evt.target;
+					offset = getMousePosition(evt);
+					offset.x -= parseFloat(selectedElement.getAttributeNS(null, 'x'));
+					offset.y -= parseFloat(selectedElement.getAttributeNS(null, 'y'));
+				}
+			}
+
+			function getMousePosition(evt) {
+				var CTM = svg.getScreenCTM();
+
+				return {
+					x: (evt.clientX - CTM.e) / CTM.a,
+					y: (evt.clientY - CTM.f) / CTM.d
+				};
+			}
+
+			function drag(evt) {
+				if (selectedElement) {
+					console.log('Dragging...');
+					evt.preventDefault();
+					var coord = getMousePosition(evt);
+					selectedElement.setAttributeNS(null, 'x', coord.x - offset.x);
+					selectedElement.setAttributeNS(null, 'y', coord.y - offset.y);
+					updateConnection();
+				}
+			}
+
+			function endDrag(evt) {
+				console.log('Ending drag...');
+				selectedElement = null;
+			}
+		}
+	</script>
+</body>
+
+</html>

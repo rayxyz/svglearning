@@ -23,10 +23,22 @@
 
 <body>
 	<svg class="example" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20" onload="makeDraggable(evt)">
+		<defs>
+			<linearGradient id="MyGradient">
+				<stop offset="5%" stop-color="#F60" />
+				<stop offset="95%" stop-color="#FF6" />
+			</linearGradient>
+		</defs>
 		<rect id="rect1" class="draggable" x="4" y="5" width="8" height="10" fill="#007bff" />
-		<rect id="rect2" class="draggable" x="18" y="5" width="8" height="10" fill="#3ff" />
+		<rect id="rect2" class="draggable" x="18" y="5" width="8" height="10" fill="url(#MyGradient)" opacity="0.5" />
 		<line id="connection" />
-		<line id="svgline" x1="1" y1="5" x2="20" y2="15" stroke="green" stroke-width="0.05"/>
+		<line id="svgline" x1="1" y1="5" x2="20" y2="15" stroke="green" stroke-width="0.3" />
+		<path d="M3,3 L5,5 L5,10 L10,15" stroke="red" stroke-width="0.05" fill="none" />
+		<g>	
+			<circle cx="2" cy="2" r="1" stroke="blue" stroke-width="0.04" fill="none" />
+			<rect x="3" y="2" width="0.2" height="0.2" stroke="green" stroke-width="0.05" fill="grey" />
+		</g>
+		<rect x="12" y="1" width="3" height="2" stroke="green" stroke-width="0.05" fill="grey" />
 	</svg>
 
 	<script>

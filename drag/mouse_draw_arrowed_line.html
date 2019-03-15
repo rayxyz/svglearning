@@ -1,0 +1,110 @@
+<html>
+
+<head>
+	<style>
+		.example {
+			border: 2px solid red;
+		}
+
+		.static {
+			cursor: not-allowed;
+		}
+
+		.draggable {
+			cursor: move;
+		}
+
+		#connection {
+			stroke-width: 0.1;
+			stroke: red;
+		}
+	</style>
+</head>
+
+<body>
+	<svg class="example" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20" onload="makeDraggable(evt)">
+		<defs id="defs">
+			<marker id="markerArrow" markerWidth="13" markerHeight="13" refX="2" refY="6" orient="auto">
+				<path d="M2,2 L2,11 L10,6 L2,2" style="fill: #000000;" />
+			</marker>
+		</defs>
+	</svg>
+
+	<script>
+		var cxn = document.getElementById('connection');
+		var defs = document.getElementById('defs');
+		var lines = [];
+
+		function makeDraggable(evt) {
+			var svg = evt.target;
+			var mousedClicked = false;
+			// svg.addEventListener('mouseover', showPoints);
+			svg.addEventListener('mousedown', startDrag);
+			svg.addEventListener('mousemove', drag);
+			svg.addEventListener('mouseup', endDrag);
+			// svg.addEventListener('mouseleave', endDrag);
+
+			var line;
+			var startPoint;
+			var endPoint;
+
+			function createLine(evt) {
+				startPoint = getMousePosition(evt);
+				endPoint = startPoint;
+				console.log('creating line...')
+				line = document.createElementNS("http://www.w3.org/2000/svg",
+					"line");
+				svg.setAttribute('id', 'line');
+				line.setAttributeNS(null, 'x1', startPoint.x);
+				line.setAttributeNS(null, 'y1', startPoint.y);
+				line.setAttributeNS(null, 'x2', endPoint.x);
+				line.setAttributeNS(null, 'y2', endPoint.y);
+				line.setAttributeNS(null, 'stroke-width', '0.05');
+				line.setAttributeNS(null, 'stroke', 'grey');
+
+				///////////// Magic happens here.
+				line.setAttributeNS(null, "marker-start", "url(#doesnt-exist)");
+				line.setAttributeNS(null, "marker-end", "url(#markerArrow)");
+				//////////////
+
+				svg.appendChild(line);
+				console.log('creating line done')
+			}
+
+			function startDrag(evt) {
+				mousedClicked = true;
+				createLine(evt);
+			}
+
+			function getMousePosition(evt) {
+				var CTM = svg.getScreenCTM();
+
+				return {
+					x: (evt.clientX - CTM.e) / CTM.a,
+					y: (evt.clientY - CTM.f) / CTM.d
+				};
+			}
+
+			function drag(evt) {
+				if (mousedClicked) {
+					endPoint = getMousePosition(evt);
+					line.setAttributeNS(null, 'x2', endPoint.x);
+					line.setAttributeNS(null, 'y2', endPoint.y);
+				}
+			}
+
+			function endDrag(evt) {
+				console.log('end dragging...');
+				lines.push(line);
+				mousedClicked = false;
+				line = null;
+				startPoint = null;
+				endPoint = null;
+				console.log('end drawing');
+				console.log('number of lines: ', lines.length)
+			}
+		}
+	</script>
+</body>
+
+</html>

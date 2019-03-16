@@ -1,0 +1,60 @@
+<html>
+
+<head>
+
+</head>
+
+<body>
+	<svg xmlns="http://www.w3.org/2000/svg" role="graph" directed="false">
+		<define name='connector'>
+			<element name='connector'>
+			  <ref name='connector.AT'/>
+	
+			  <zeroOrMore><ref name='shapeCommon.CM'/></zeroOrMore>
+			</element>
+		  </define>
+	
+		  <define name='connector.AT' combine='interleave'>
+		  <ref name='svg.N1N2.attr'/>
+			<ref name='svg.ShapeCommon.attr'/>
+	
+			<ref name='svg.D.attr'/>
+			<optional>
+			  <ref name='svg.Directed.attr'/>
+			  <ref name='svg.N1portN2port.attr'/>
+			  <attribute name='connectorLength' svg:animatable='true' svg:inheritable='false'>
+				<ref name='Number.datatype'/>
+			  </attribute>
+			</optional>
+	
+		  </define>
+		<title>K3,3 Graph</title>
+		<desc>
+			The famous non-planar basic graph: a complete bipartite graph of six vertices,
+			three of which connect to each of the other three
+		</desc>
+
+		<g role="node" id="n-1" />
+		<g role="node" id="n-2" />
+		<g role="node" id="n-3" />
+
+		<g role="node" id="n-4" />
+		<g role="node" id="n-5" />
+		<g role="node" id="n-6" />
+
+		<connector role="edge" n1="#n-1" n2="#n-4" />
+		<connector role="edge" n1="#n-1" n2="#n-5" />
+		<connector role="edge" n1="#n-1" n2="#n-6" />
+
+		<connector role="edge" n1="#n-2" n2="#n-4" />
+		<connector role="edge" n1="#n-2" n2="#n-5" />
+		<connector role="edge" n1="#n-2" n2="#n-6" />
+
+		<connector role="edge" n1="#n-3" n2="#n-4" />
+		<connector role="edge" n1="#n-3" n2="#n-5" />
+		<connector role="edge" n1="#n-3" n2="#n-6" />
+
+	</svg>
+</body>
+
+</html>

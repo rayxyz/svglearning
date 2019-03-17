@@ -1,0 +1,216 @@
+<html>
+
+<head>
+	<style>
+		.example {
+			border: 2px solid red;
+		}
+
+		.static {
+			cursor: not-allowed;
+		}
+
+		.draggable {
+			cursor: move;
+		}
+
+		#connection {
+			stroke-width: 0.1;
+			stroke: red;
+		}
+	</style>
+</head>
+
+<body>
+	<svg class="example" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20" onload="makeDraggable(evt)">
+		<defs>
+			<linearGradient id="MyGradient">
+				<stop offset="5%" stop-color="#F60" />
+				<stop offset="95%" stop-color="#FF6" />
+			</linearGradient>
+			<defs id="defs">
+				<marker id="markerArrow" markerWidth="13" markerHeight="13" refX="2" refY="6" orient="auto">
+					<path d="M2,2 L2,11 L10,6 L2,2" style="fill: #000000;" />
+				</marker>
+			</defs>
+		</defs>
+		<rect id="rect1" x="4" y="5" width="8" height="10" fill="#007bff" />
+		<rect id="rect2" class="draggable" x="18" y="5" width="8" height="10" fill="url(#MyGradient)" opacity="0.5" />
+		<line id="connection" />
+	</svg>
+
+	<script>
+		var rect1 = document.getElementById('rect1');
+		var rect2 = document.getElementById('rect2');
+		var cxn = document.getElementById('connection');
+
+		var defs = document.getElementById('defs');
+		var lines = [];
+
+		function getMousePosition(svg, evt) {
+			var CTM = svg.getScreenCTM();
+
+			return {
+				x: (evt.clientX - CTM.e) / CTM.a,
+				y: (evt.clientY - CTM.f) / CTM.d
+			};
+		}
+
+		function getIntersection(dx, dy, cx, cy, w, h) {
+			if (Math.abs(dy / dx) < h / w) {
+				return [cx + (dx > 0 ? w : -w), cy + dy * w / Math.abs(dx)];
+			} else {
+				return [cx + dx * h / Math.abs(dy), cy + (dy > 0 ? h : -h)];
+			}
+		}
+
+		function updateConnection() {
+			var x1 = parseFloat(rect1.getAttributeNS(null, 'x'));
+			var y1 = parseFloat(rect1.getAttributeNS(null, 'y'));
+			var x2 = parseFloat(rect2.getAttributeNS(null, 'x'));
+			var y2 = parseFloat(rect2.getAttributeNS(null, 'y'));
+
+			var w1 = parseFloat(rect1.getAttributeNS(null, 'width')) / 2;
+			var h1 = parseFloat(rect1.getAttributeNS(null, 'height')) / 2;
+			var w2 = parseFloat(rect2.getAttributeNS(null, 'width')) / 2;
+			var h2 = parseFloat(rect2.getAttributeNS(null, 'height')) / 2;
+
+			var cx1 = x1 + w1;
+			var cy1 = y1 + h1;
+			var cx2 = x2 + w2;
+			var cy2 = y2 + h2;
+
+			var dx = cx2 - cx1;
+			var dy = cy2 - cy1;
+
+			var p1, p2;
+			p1 = getIntersection(dx, dy, cx1, cy1, w1, h1);
+			p2 = getIntersection(-dx, -dy, cx2, cy2, w2, h2);
+
+			cxn.setAttributeNS(null, 'x1', p1[0]);
+			cxn.setAttributeNS(null, 'y1', p1[1]);
+			cxn.setAttributeNS(null, 'x2', p2[0]);
+			cxn.setAttributeNS(null, 'y2', p2[1]);
+		}
+
+		function updateLines(svg, evt) {
+			let pos = getMousePosition(svg, evt);
+			for (let i = 0; i < lines.length; i++) {
+				lines[i].setAttributeNS(null, 'x2', pos.x);
+				lines[i].setAttributeNS(null, 'y2', pos.y);
+			}
+		}
+
+		function makeDraggable(evt) {
+			var svg = evt.target;
+
+			var mousedClicked = false;
+			var markerArrowCreated = false;
+			var lineDrawable = false;
+			var lineAcceptable = false;
+
+			// svg.addEventListener('mouseover', showPoints);
+			svg.addEventListener('mousedown', startDrag);
+			svg.addEventListener('mousemove', drag);
+			svg.addEventListener('mouseup', endDrag);
+			// svg.addEventListener('mouseleave', endDrag);
+
+			let rect1 = document.getElementById('rect1');
+			rect1.addEventListener('mouseover', (evt) => {
+				console.log('Mouse overs me');
+				evt.target.setAttributeNS(null, 'stroke', 'yellow')
+				lineDrawable = true;
+			});
+			rect1.addEventListener('mouseout', (evt) => {
+				console.log('Mouse outs me....');
+				evt.target.setAttributeNS(null, 'stroke', 'grey')
+				if (!mousedClicked) {
+					lineDrawable = false;
+				}
+			});
+
+			var line;
+			var startPoint;
+			var endPoint;
+
+			function createLine(evt) {
+				startPoint = getMousePosition(svg, evt);
+				endPoint = startPoint;
+				console.log('creating line...')
+				line = document.createElementNS("http://www.w3.org/2000/svg",
+					"line");
+				// line.setAttribute('id', 'line');
+				line.setAttributeNS(null, 'x1', startPoint.x);
+				line.setAttributeNS(null, 'y1', startPoint.y);
+				line.setAttributeNS(null, 'x2', endPoint.x);
+				line.setAttributeNS(null, 'y2', endPoint.y);
+				line.setAttributeNS(null, 'stroke-width', '0.05');
+				line.setAttributeNS(null, 'stroke', 'grey');
+
+				svg.appendChild(line);
+				console.log('creating line done')
+			}
+
+			var selectedElement, offset;
+
+			function startDrag(evt) {
+				mousedClicked = true;
+				if (lineDrawable) {
+					createLine(evt);
+				}
+
+				if (evt.target.classList.contains('draggable')) {
+					console.log('Starting drag...');
+					selectedElement = evt.target;
+					offset = getMousePosition(svg, evt);
+					offset.x -= parseFloat(selectedElement.getAttributeNS(null, 'x'));
+					offset.y -= parseFloat(selectedElement.getAttributeNS(null, 'y'));
+				}
+			}
+
+			function drag(evt) {
+				if (mousedClicked && lineDrawable) {
+					if (!markerArrowCreated) {
+						///////////// Magic happens here.
+						line.setAttributeNS(null, "marker-start", "url(#doesnt-exist)");
+						line.setAttributeNS(null, "marker-end", "url(#markerArrow)");
+						markerArrowCreated = true;
+						//////////////
+					}
+					endPoint = getMousePosition(svg, evt);
+					line.setAttributeNS(null, 'x2', endPoint.x);
+					line.setAttributeNS(null, 'y2', endPoint.y);
+				}
+
+				if (selectedElement) {
+					console.log('Dragging...');
+					evt.preventDefault();
+					var coord = getMousePosition(svg, evt);
+					selectedElement.setAttributeNS(null, 'x', coord.x - offset.x);
+					selectedElement.setAttributeNS(null, 'y', coord.y - offset.y);
+					updateConnection();
+					updateLines(svg, evt);
+				}
+
+			}
+
+			function endDrag(evt) {
+				console.log('Ending drag...');
+				console.log('end dragging...');
+				lines.push(line);
+				mousedClicked = false;
+				markerArrowCreated = false;
+				lineDrawable = false;
+				line = null;
+				startPoint = null;
+				endPoint = null;
+				console.log('end drawing');
+				console.log('number of lines: ', lines.length)
+
+				selectedElement = null;
+			}
+		}
+	</script>
+</body>
+
+</html>

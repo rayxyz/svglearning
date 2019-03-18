@@ -34,18 +34,19 @@
 				</marker>
 			</defs>
 		</defs>
-		<rect id="rect1" x="4" y="5" width="3" height="3" fill="#007bff" />
-		<g transform="translate(400,300)">
-			<circle id="circle" cx="18" cy="7" r="0.7" stroke="grey" stroke-width="0.1" fill="teal" />
-			<rect  class="draggable" id="rect2" x="18" y="5" width="3" height="3" fill="url(#MyGradient)" opacity="0.5" />
+		<g>
+			<rect id="rect1" x="4" y="5" width="3" height="3" fill="#007bff" />
+			<circle id="circle" cx="7" cy="6" r="0.07" stroke="grey" stroke-width="0.1" fill="teal" />
 		</g>
+		<g>
+			<rect class="draggable" id="rect2" x="18" y="5" width="3" height="3" fill="url(#MyGradient)" opacity="0.5" />
+			<circle id="circle2" cx="18" cy="6" r="0.07" stroke="grey" stroke-width="0.1" fill="teal" />
+		</g>
+
 		<line id="connection" />
 	</svg>
 
 	<script>
-		var rect1 = document.getElementById('rect1');
-		var rect2 = document.getElementById('rect2');
-
 		var defs = document.getElementById('defs');
 		var lines = [];
 
@@ -92,20 +93,36 @@
 			svg.addEventListener('mouseup', endDrag);
 			// svg.addEventListener('mouseleave', endDrag);
 
-			let rect1 = document.getElementById('rect1');
-			rect1.addEventListener('mouseover', (evt) => {
+			var rect1 = document.getElementById('rect1');
+			var circle = document.getElementById('circle');
+			var rect2 = document.getElementById('rect2');
+			var circle2 = document.getElementById('circle2');
+
+			circle.addEventListener('mouseover', (evt) => {
 				console.log('Mouse overs me');
 				evt.target.setAttributeNS(null, 'stroke', 'yellow')
 				evt.target.setAttributeNS(null, 'stroke-width', '0.1')
 				lineDrawable = true;
 			});
-			rect1.addEventListener('mouseout', (evt) => {
+			circle.addEventListener('mouseout', (evt) => {
 				console.log('Mouse outs me....');
 				evt.target.setAttributeNS(null, 'stroke', 'grey')
 				if (!mousedClicked) {
 					lineDrawable = false;
 				}
 			});
+
+			circle2.addEventListener('mouseover', (evt) => {
+				if (mousedClicked && lineDrawable) {
+					lineAcceptable = true;
+					evt.target.setAttributeNS(null, 'stroke', 'yellow')
+					evt.target.setAttributeNS(null, 'stroke-width', '0.1')
+				}
+			})
+			circle2.addEventListener('mouseout', (evt) => {
+				evt.target.setAttributeNS(null, 'stroke', 'grey');
+			})
+
 
 			var line;
 			var startPoint;
@@ -153,7 +170,7 @@
 						markerArrowCreated = true;
 						//////////////
 					}
-					endPoint = getMousePosition(svg, evt);
+					mousePos = getMousePosition(svg, evt);
 					if (startPoint.x != endPoint.x && startPoint.y != endPoint.y) {
 						if (!lineCreated) {
 							createLine();
@@ -180,14 +197,22 @@
 			function endDrag(evt) {
 				console.log('Ending drag...');
 				console.log('end dragging...');
-				if (lineCreated) {
+				if (lineCreated && lineAcceptable) {
 					lines.push(line);
+				} else {
+					if (line) {
+						line.setAttributeNS(null, 'x2', startPoint.x);
+						line.setAttributeNS(null, 'y2', startPoint.y);
+						line.setAttributeNS(null, "marker-start", null);
+						line.setAttributeNS(null, "marker-end", null);
+					}
 				}
 				mousedClicked = false;
 				markerArrowCreated = false;
 				lineDrawable = false;
 				lineCreated = false;
 				draggedALittle = false;
+				lineAcceptable = false;
 				line = null;
 				startPoint = null;
 				endPoint = null;

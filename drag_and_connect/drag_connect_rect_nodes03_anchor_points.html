@@ -13,11 +13,6 @@
 		.draggable {
 			cursor: move;
 		}
-
-		#connection {
-			stroke-width: 0.1;
-			stroke: red;
-		}
 	</style>
 </head>
 
@@ -25,8 +20,8 @@
 	<svg class="example" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20" onload="makeDraggable(evt)">
 		<defs>
 			<linearGradient id="MyGradient">
-				<stop offset="5%" stop-color="#F60" />
-				<stop offset="95%" stop-color="#FF6" />
+				<stop offset="5%" stop-color="#0ff />
+				<stop offset=" 95%" stop-color="#0Ff" />
 			</linearGradient>
 			<defs id="defs">
 				<marker id="markerArrow" markerWidth="13" markerHeight="13" refX="2" refY="6" orient="auto">
@@ -34,16 +29,12 @@
 				</marker>
 			</defs>
 		</defs>
-		<g>
-			<rect id="rect1" x="4" y="5" width="3" height="3" fill="#007bff" />
-			<circle id="circle" cx="7" cy="6" r="0.07" stroke="grey" stroke-width="0.1" fill="teal" />
-		</g>
-		<g>
-			<rect class="draggable" id="rect2" x="18" y="5" width="3" height="3" fill="url(#MyGradient)" opacity="0.5" />
-			<circle id="circle2" cx="18" cy="6" r="0.07" stroke="grey" stroke-width="0.1" fill="teal" />
-		</g>
+		<rect id="rect1" x="4" y="5" width="3" height="3" fill="#007bff" />
+		<circle id="circle" cx="7" cy="6" r="0.07" stroke="grey" stroke-width="0.1" fill="teal" />
 
-		<line id="connection" />
+		<rect class="draggable" id="rect2" x="18" y="5" width="3" height="3" fill="url(#MyGradient)" opacity="0.5" />
+		<circle id="circle2" cx="18" cy="6" r="0.07" stroke="grey" stroke-width="0.1" fill="teal" />
+
 	</svg>
 
 	<script>
@@ -62,6 +53,37 @@
 			};
 		}
 
+		function isNear(svg, rect, distance, evt) {
+			var pos = getMousePosition(svg, evt);
+			var x = parseFloat(rect.getAttributeNS(null, 'x'));
+			var y = parseFloat(rect.getAttributeNS(null, 'y'));
+			var width = parseFloat(rect.getAttributeNS(null, 'width'));
+			var height = parseFloat(rect.getAttributeNS(null, 'height'));
+			var left = x - distance,
+				top = y - distance,
+				right = left + width + (2 * distance),
+				bottom = top + height + (2 * distance);
+
+			return (pos.x > left && pos.x < right && pos.y > top && pos.y < bottom);
+		};
+
+		function isNearCircle(svg, circle, distance, evt) {
+			let r = parseFloat(circle.getAttributeNS(null, 'r'));
+			let cx = parseFloat(circle.getAttributeNS(null, 'cx'));
+			let cy = parseFloat(circle.getAttributeNS(null, 'cy'));
+			let pos = getMousePosition(svg, evt);
+			let nearCenterDistance = r + distance;
+
+			console.log('cx: ', cx, ', cy: ', cy, ', pos.x: ', pos.x, ', pos.y: ', pos.y);
+			console.log('Math.abs(cx - pos.x): ', Math.abs(cx - pos.x), ', Math.abs(cy - pos.y): ', Math.abs(cy - pos.y));
+
+			let R = Math.sqrt(Math.pow(Math.abs(cx - pos.x), 2) + Math.pow(Math.abs(cy - pos.y), 2));
+
+			console.log('R => ', R, ', nearCenterDistance => ', nearCenterDistance);
+
+			return (R < nearCenterDistance)
+		}
+
 		function makeDraggable(evt) {
 			var svg = evt.target;
 
@@ -76,6 +98,7 @@
 			var lineCreated = false;
 			var lineAcceptable = false;
 			var draggedALittle = false;
+			var connectingAnchorPointsCreated = false;
 
 			// svg.addEventListener('mouseover', showPoints);
 			svg.addEventListener('mousedown', startDrag);
@@ -87,6 +110,23 @@
 			var circle = document.getElementById('circle');
 			var rect2 = document.getElementById('rect2');
 			var circle2 = document.getElementById('circle2');
+
+			rect2.addEventListener('mouseenter', (evt) => {
+				console.log('I am rect2, the mouse overs me, I am gonna show the connecting anchor points...');
+				// createRectConnectingAnchorPoints(rect2);
+			});
+			rect2.addEventListener('mouseout', (evt) => {
+				console.log('The mouse outs me, haha...');
+				// document.querySelectorAll('.rectConnectingAnchorPoint').remove();
+				// Array.prototype.slice.call(
+				// 	document.querySelectorAll('.rectConnectingAnchorPoint')).forEach((point) => {
+				// 		point.remove();
+				// 	});
+				// anchorPoints.forEach((point) => {
+				// 	// testBox.parentNode.removeChild(testBox);
+				// 	point.remove();
+				// });
+			});
 
 			circle.addEventListener('mouseover', (evt) => {
 				console.log('Mouse overs me');
@@ -113,6 +153,67 @@
 				evt.target.setAttributeNS(null, 'stroke', 'grey');
 			})
 
+			function createRectConnectingAnchorPoints(rect) {
+				let x = parseFloat(rect.getAttributeNS(null, 'x'));
+				let y = parseFloat(rect.getAttributeNS(null, 'y'));
+				let w = parseFloat(rect.getAttributeNS(null, 'width'));
+				let h = parseFloat(rect.getAttributeNS(null, 'height'));
+
+				let midTopx = x + w / 2;
+				let midTopy = y;
+
+				let midRightx = x + w;
+				let midRighty = y + h / 2;
+
+				let midBottomx = x + w / 2;
+				let midBottomy = y + h;
+
+				let midLeftx = x;
+				let midLefty = y + h / 2;
+
+				drawCircle(midTopx, midTopy, '0.09', 'teal');
+				drawCircle(midRightx, midRighty, '0.09', 'teal');
+				drawCircle(midBottomx, midBottomy, '0.09', 'teal');
+				drawCircle(midLeftx, midLefty, '0.09', 'teal');
+			}
+
+			function drawCircle(cx, cy, radius, color) {
+				console.log('draw circle, cx: ', cx, ', cy: ', cy);
+				var shape = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+				shape.setAttributeNS(null, 'class', 'rectConnectingAnchorPoint');
+				shape.setAttributeNS(null, "cx", cx);
+				shape.setAttributeNS(null, "cy", cy);
+				shape.setAttributeNS(null, "r", radius);
+				shape.setAttributeNS(null, "fill", color);
+				svg.appendChild(shape);
+			}
+
+			function removeConnectingAnchorPoints() {
+				Array.prototype.slice.call(
+					document.querySelectorAll('.rectConnectingAnchorPoint')).forEach((point) => {
+						point.remove();
+					});
+			}
+
+			document.body.addEventListener('mousemove', (evt) => {
+				if (isNear(svg, rect2, 0.3, evt)) {
+					// console.log('The mouse is near, ready to accept it...');
+					if (!connectingAnchorPointsCreated) {
+						createRectConnectingAnchorPoints(rect2);
+						connectingAnchorPointsCreated = true;
+					}
+				} else {
+					removeConnectingAnchorPoints();
+					connectingAnchorPointsCreated = false;
+				}
+
+				Array.prototype.slice.call(
+					document.querySelectorAll('.rectConnectingAnchorPoint')).forEach((point) => {
+						if (isNearCircle(svg, point, 0.3, evt)) {
+							console.log('attract the arrow...>>>>>');
+						}
+					});
+			});
 
 			var line;
 			var startPoint;

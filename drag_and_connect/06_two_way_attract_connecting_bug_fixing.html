@@ -18,16 +18,19 @@
 
 <body>
 	<svg class="example" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20" onload="makeDraggable(evt)">
-		<defs>
-			<defs id="defs">
-				<marker id="markerArrow" markerWidth="13" markerHeight="13" refX="2" refY="6" orient="auto">
-					<path d="M2,2 L2,11 L10,6 L2,2" style="fill: #000000;" />
-				</marker>
-			</defs>
+		<defs id="defs">
+			<marker id="markerArrow" markerWidth="13" markerHeight="13" refX="2" refY="6" orient="auto">
+				<path d="M2,2 L2,11 L10,6 L2,2" style="fill: #000000;" />
+			</marker>
+			<linearGradient id="MyGradient">
+				<stop offset="5%" stop-color="#F60" />
+				<stop offset="95%" stop-color="#FF6" />
+			</linearGradient>
 		</defs>
-		<rect class="draggable" id="rect1" x="4" y="5" width="3" height="3" fill="#007bff" stroke-width="0.3" stroke="red" />
-		<rect class="draggable" id="rect2" x="18" y="5" width="3" height="3" fill="grey" opacity="0.5" stroke-width="0.3"
-		 stroke="red" />
+		<rect class="draggable" node-type="rect" id="rect1" x="4" y="5" width="3" height="3" fill="#007bff" stroke-width="0.3" />
+		<rect class="draggable" node-type="rect" id="rect2" x="18" y="5" width="3" height="3" fill="grey" opacity="0.5"
+		 stroke-width="0.3" />
+		<circle class="draggable" node-type="circle" id="circle" cx="13" cy="12" r="1" fill="url(#MyGradient)" opacity="0.5" />
 	</svg>
 
 	<script>
@@ -35,6 +38,11 @@
 		var lines = [];
 
 		var cxns = []
+
+		let NodeTypes = {
+			RECT: 'rect',
+			CIRCLE: 'circle'
+		};
 
 
 		function getMousePosition(svg, evt) {
@@ -44,6 +52,14 @@
 				x: (evt.clientX - CTM.e) / CTM.a,
 				y: (evt.clientY - CTM.f) / CTM.d
 			};
+		}
+
+		function getNodeType(ele) {
+			if (ele) {
+				return ele.getAttributeNS(null, 'node-type');
+			}
+
+			return "";
 		}
 
 		function isNearRect(svg, rect, distance, evt) {
@@ -69,41 +85,39 @@
 
 			let R = Math.sqrt(Math.pow(Math.abs(cx - pos.x), 2) + Math.pow(Math.abs(cy - pos.y), 2));
 
+			// console.log('cx: ', cx);
+			// console.log('cy', cy);
+			// console.log('r: ', r);
+			// console.log('nearCenterDistance: ', nearCenterDistance);
+			// console.log('R: ', R);
+
 			return R < nearCenterDistance
 		}
 
-		function removeLineArrowMarker(line, startPoint) {
+		function removeLine(line) {
 			if (line) {
-				line.setAttributeNS(null, 'x2', startPoint.x);
-				line.setAttributeNS(null, 'y2', startPoint.y);
-				line.setAttributeNS(null, "marker-start", null);
-				line.setAttributeNS(null, "marker-end", null);
+				// line.setAttributeNS(null, 'x2', startPoint.x);
+				// line.setAttributeNS(null, 'y2', startPoint.y);
+				// line.setAttributeNS(null, "marker-start", null);
+				// line.setAttributeNS(null, "marker-end", null);
 				let lineId = line.getAttributeNS(null, 'id');
-				console.log('line id => ', lineId)
 				let lineEle = document.querySelector('#' + lineId);
 				if (lineEle) {
 					lineEle.remove();
 				}
 			} else {
-				console.log('No marker...');
+				console.log('No line to remove');
 			}
 		}
 
 		function checkMouseInsideBoundary(svg, evt, shape, type) {
 			let mousePos = getMousePosition(svg, evt);
 			if (type == 'rect') {
-				let x = parseFloat(shape.getAttributeNS(null, 'x')) - parseFloat(shape.getAttributeNS(null, 'stroke-width'));
-				let y = parseFloat(shape.getAttributeNS(null, 'y')) - parseFloat(shape.getAttributeNS(null, 'stroke-width'));
-				let width = parseFloat(shape.getAttributeNS(null, 'width')) + parseFloat(shape.getAttributeNS(null, 'stroke-width'));
-				let height = parseFloat(shape.getAttributeNS(null, 'height')) + parseFloat(shape.getAttributeNS(null, 'stroke-width'));
-
-				console.log('rectttttttttttttttttttttttttttttttttt');
-				// console.log('mousePos.x: ', mousePos.x);
-				// console.log('x: ', x);
-				// console.log('y: ', y);
-				// console.log('x + width: ', x + width);
-				// console.log('mousePos.y: ', mousePos.y);
-				// console.log('y + height: ', y + height);
+				let strokeWidth = parseFloat(shape.getAttributeNS(null, 'stroke-width'));
+				let x = parseFloat(shape.getAttributeNS(null, 'x')) - strokeWidth;
+				let y = parseFloat(shape.getAttributeNS(null, 'y')) - strokeWidth;
+				let width = parseFloat(shape.getAttributeNS(null, 'width')) + strokeWidth;
+				let height = parseFloat(shape.getAttributeNS(null, 'height')) + strokeWidth;
 
 				return (mousePos.x >= x && mousePos.x <= (x + width)) && (mousePos.y >= y && mousePos.y <= (y + height));
 			}
@@ -139,7 +153,7 @@
 			var startPoint;
 			var endPoint;
 
-			var selectedElement, offset;
+			var selectedElement, selectedElementOffset;
 
 			svg.addEventListener('mouseover', decide)
 			svg.addEventListener('mousedown', startDrag);
@@ -148,15 +162,7 @@
 
 			var rect1 = document.getElementById('rect1');
 			var rect2 = document.getElementById('rect2');
-
-			// Array.prototype.slice.call(document.querySelectorAll('.draggable')).forEach((node) => {
-			// 	node.addEventListener('mouseover', (evt) => {
-			// 		console.log('mouse overs node ----->>>>>>>');
-			// 		if (!mousedClicked) {
-			// 			lineSourceObj = evt.target
-			// 		}
-			// 	});
-			// });
+			var circle = document.getElementById('circle');
 
 			function createRectConnectingAnchorPoints(rect) {
 				let points = calculateRectConnectingAnchorPoints(rect);
@@ -193,6 +199,43 @@
 				}
 			}
 
+			function createCircleConnectingAnchorPoints(circle) {
+				let points = calculateCircleConnectingAnchorPoints(circle);
+				console.log('points: ', points);
+
+				drawCircle(points.north.x, points.north.y, '0.09', 'teal', 'north');
+				drawCircle(points.east.x, points.east.y, '0.09', 'teal', 'east');
+				drawCircle(points.south.x, points.south.y, '0.09', 'teal', 'south');
+				drawCircle(points.west.x, points.west.y, '0.09', 'teal', 'west');
+			}
+
+			function calculateCircleConnectingAnchorPoints(circle) {
+				let cx = parseFloat(circle.getAttributeNS(null, 'cx'));
+				let cy = parseFloat(circle.getAttributeNS(null, 'cy'));
+				let r = parseFloat(circle.getAttributeNS(null, 'r'));
+
+				console.log('cx: ', cx, ', cy: ', cy, ', r: ', r);
+
+				return {
+					north: {
+						x: cx,
+						y: cy - r
+					},
+					east: {
+						x: cx + r,
+						y: cy
+					},
+					south: {
+						x: cx,
+						y: cy + r
+					},
+					west: {
+						x: cx - r,
+						y: cy
+					}
+				}
+			}
+
 			function drawCircle(cx, cy, radius, color, posid) {
 				console.log('draw circle, cx: ', cx, ', cy: ', cy);
 				var shape = document.createElementNS("http://www.w3.org/2000/svg", "circle");
@@ -218,10 +261,6 @@
 						createRectConnectingAnchorPoints(rect1);
 						connectingAnchorPointsCreated = true;
 					}
-					// if (lineDrawable) {
-					// 	lineTargetObj = rect1;
-					// 	console.log('line target obj decided in near field');
-					// }
 					if (lineSourceObj && lineDrawable) {
 						if (checkMouseInsideBoundary(svg, evt, rect1, 'rect')) {
 							lineTargetObj = rect1;
@@ -232,26 +271,32 @@
 						createRectConnectingAnchorPoints(rect2);
 						connectingAnchorPointsCreated = true;
 					}
-					// if (lineDrawable) {
-					// 	lineTargetObj = rect2;
-					// 	console.log('line target obj decided in near field');
-					// }
 					if (lineSourceObj && lineDrawable) {
 						if (checkMouseInsideBoundary(svg, evt, rect2, 'rect')) {
 							lineTargetObj = rect2;
 						}
+					}
+				} else if (isNearCircle(svg, circle, 0.3, evt)) {
+					if (!connectingAnchorPointsCreated) {
+						createCircleConnectingAnchorPoints(circle);
+						connectingAnchorPointsCreated = true;
+					}
+					if (checkMouseInsideBoundary(svg, evt, circle, 'circle')) {
+						lineTargetObj = circle;
 					}
 				} else {
 					removeConnectingAnchorPoints();
 					connectingAnchorPointsCreated = false;
 				}
 
+
+
 				Array.prototype.slice.call(
 					document.querySelectorAll('.rectConnectingAnchorPoint')).forEach((point) => {
 						point.addEventListener('mouseover', (evt) => {
 							console.log('Mouse overs me');
-							evt.target.setAttributeNS(null, 'stroke', 'yellow')
-							evt.target.setAttributeNS(null, 'stroke-width', '0.1')
+							// evt.target.setAttributeNS(null, 'stroke', 'yellow');
+							// evt.target.setAttributeNS(null, 'stroke-width', '0.1');
 							lineDrawable = true;
 						});
 						point.addEventListener('mouseout', (evt) => {
@@ -262,10 +307,17 @@
 							}
 						});
 
-						if (lineDrawable && isNearCircle(svg, point, 0.4, evt)) {
-							console.log('attract the arrow...>>>>>');
-							isNearAttractivePoint = true;
-							attrativePoint = point;
+						if (lineDrawable) {
+							if (isNearCircle(svg, point, 0.4, evt)) {
+								console.log('attract the arrow around attractive point...>>>>>');
+								point.setAttributeNS(null, 'stroke', 'yellow');
+								point.setAttributeNS(null, 'stroke-width', '0.1');
+								isNearAttractivePoint = true;
+								attrativePoint = point;
+							} else {
+								point.setAttributeNS(null, 'stroke', null);
+								point.setAttributeNS(null, 'stroke-width', 0);
+							}
 						}
 					});
 			});
@@ -285,8 +337,6 @@
 				line.setAttributeNS(null, 'stroke', 'grey');
 				line.connectedStartPointRaw = attrativePoint;
 				line.source = lineSourceObj;
-
-				console.log('line.connectedStartPointRaw in creating...: ', line.connectedStartPointRaw);
 
 				svg.appendChild(line);
 				console.log('creating line done')
@@ -309,14 +359,23 @@
 				if (lineDrawable) {
 					startPoint = getMousePosition(svg, evt);
 					endPoint = startPoint;
+				} else {
+					removeConnectingAnchorPoints();
 				}
 
 				if (evt.target.classList.contains('draggable')) {
 					console.log('Starting drag...');
 					selectedElement = evt.target;
-					offset = getMousePosition(svg, evt);
-					offset.x -= parseFloat(selectedElement.getAttributeNS(null, 'x'));
-					offset.y -= parseFloat(selectedElement.getAttributeNS(null, 'y'));
+					selectedElementOriginalPos = getMousePosition(svg, evt);
+					nodeType = getNodeType(selectedElement);
+					if (nodeType === NodeTypes.RECT) {
+						selectedElementOffset.x -= parseFloat(selectedElement.getAttributeNS(null, 'x'));
+						selectedElementOffset.y -= parseFloat(selectedElement.getAttributeNS(null, 'y'));
+					}
+					if (nodeType === NodeTypes.CIRCLE) {
+						selectedElementOffset.cx -= parseFloat(selectedElement.getAttributeNS(null, 'cx'));
+						selectedElementOffset.cy -= parseFloat(selectedElement.getAttributeNS(null, 'cy'));
+					}
 				}
 			}
 
@@ -332,7 +391,6 @@
 					}
 					endPoint = getMousePosition(svg, evt);
 					if (startPoint && endPoint && !(startPoint.x == endPoint.x && startPoint.y == endPoint.y)) {
-						console.log('vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv');
 						if (!lineCreated && isNearAttractivePoint && attrativePoint) {
 							lineTargetObj = null;
 							createLine(lineSourceObj, attrativePoint);
@@ -348,23 +406,28 @@
 				if (selectedElement) {
 					console.log('Dragging...');
 					evt.preventDefault();
+
 					var coord = getMousePosition(svg, evt);
-					selectedElement.setAttributeNS(null, 'x', coord.x - offset.x);
-					selectedElement.setAttributeNS(null, 'y', coord.y - offset.y);
-					updateLines(svg, evt);
+					let nodeType = getNodeType(selectedElement);
+					if (nodeType == NodeTypes.RECT) {
+						selectedElement.setAttributeNS(null, 'x', coord.x - selectedElementOffset.x);
+						selectedElement.setAttributeNS(null, 'y', coord.y - selectedElementOffset.y);
+					}
+					if (nodeType == NodeTypes.CIRCLE) {
+						selectedElement.setAttributeNS(null, 'cx', coord.x - selectedElementOffset.cx);
+						selectedElement.setAttributeNS(null, 'cy', coord.y - selectedElementOffset.cy);
+					}
+
+					updateLines(selectedElement);
 				}
 
 			}
 
 			function endDrag(evt) {
-				console.log('Ending drag...');
-				console.log('end dragging...');
-				console.log('line created: ', lineCreated);
 				if (lineCreated) {
 					if (isNearAttractivePoint && attrativePoint && lineTargetObj) {
 						if (lineSourceObj && lineTargetObj && lineSourceObj.getAttributeNS(null, 'id') == lineTargetObj.getAttributeNS(null, 'id')) {
-							console.log('#################################');
-							removeLineArrowMarker(line, startPoint);
+							removeLine(line);
 						} else {
 							console.log('**********************');
 							endPoint.x = parseFloat(attrativePoint.getAttributeNS(null, 'cx'));
@@ -376,15 +439,11 @@
 							lines.push(line);
 						}
 					} else {
-						console.log('nonononononononononononono');
-						removeLineArrowMarker(line, startPoint);
+						removeLine(line);
 					}
-					console.log('=----------------');
 				} else {
-					console.log('xxxxxxxxxxxxxxxxxxxxxxxxx')
-					removeLineArrowMarker(line, startPoint);
+					removeLine(line);
 				}
-				console.log('jjjjjjjjjjjjjjjjjjjjjjjjjjjjj');
 				mousedClicked = false;
 				markerArrowCreated = false;
 				lineDrawable = false;
@@ -392,13 +451,14 @@
 				line = null;
 				lineSourceObj = null;
 				lineTargetObj = null;
-				console.log('end drawing');
 				console.log('number of lines: ', lines.length)
 
 				selectedElement = null;
 			}
 
-			function updateLines(svg, evt) {
+			function updateLines(selectedElement) {
+				let nodeType = getNodeType(selectedElement);
+
 				for (let i = 0; i < lines.length; i++) {
 					if (lines[i].connectedStartPointRaw && lines[i].connectedEndPointRaw) {
 						let connectedStartPoint = lines[i].connectedStartPointRaw;
@@ -410,46 +470,92 @@
 						let x2 = parseFloat(lines[i].getAttributeNS(null, 'x2'));
 						let y2 = parseFloat(lines[i].getAttributeNS(null, 'y2'));
 
-						switch (connectedStartPoint.getAttributeNS(null, 'posid')) {
-							case 'top':
-								x1 = anchorPointsSource.top.x;
-								y1 = anchorPointsSource.top.y;
-								break;
-							case 'right':
-								x1 = anchorPointsSource.right.x;
-								y1 = anchorPointsSource.right.y;
-								break;
-							case 'bottom':
-								x1 = anchorPointsSource.bottom.x;
-								y1 = anchorPointsSource.bottom.y;
-								break;
-							case 'left':
-								x1 = anchorPointsSource.left.x;
-								y1 = anchorPointsSource.left.y;
-								break;
-							default:
-								break;
+						if (nodeType == NodeTypes.RECT) {
+							switch (connectedStartPoint.getAttributeNS(null, 'posid')) {
+								case 'top':
+									x1 = anchorPointsSource.top.x;
+									y1 = anchorPointsSource.top.y;
+									break;
+								case 'right':
+									x1 = anchorPointsSource.right.x;
+									y1 = anchorPointsSource.right.y;
+									break;
+								case 'bottom':
+									x1 = anchorPointsSource.bottom.x;
+									y1 = anchorPointsSource.bottom.y;
+									break;
+								case 'left':
+									x1 = anchorPointsSource.left.x;
+									y1 = anchorPointsSource.left.y;
+									break;
+								default:
+									break;
+							}
+
+							switch (connectedEndPoint.getAttributeNS(null, 'posid')) {
+								case 'top':
+									x2 = anchorPointsTarget.top.x;
+									y2 = anchorPointsTarget.top.y;
+									break;
+								case 'right':
+									x2 = anchorPointsTarget.right.x;
+									y2 = anchorPointsTarget.right.y;
+									break;
+								case 'bottom':
+									x2 = anchorPointsTarget.bottom.x;
+									y2 = anchorPointsTarget.bottom.y;
+									break;
+								case 'left':
+									x2 = anchorPointsTarget.left.x;
+									y2 = anchorPointsTarget.left.y;
+									break;
+								default:
+									break;
+							}
 						}
 
-						switch (connectedEndPoint.getAttributeNS(null, 'posid')) {
-							case 'top':
-								x2 = anchorPointsTarget.top.x;
-								y2 = anchorPointsTarget.top.y;
-								break;
-							case 'right':
-								x2 = anchorPointsTarget.right.x;
-								y2 = anchorPointsTarget.right.y;
-								break;
-							case 'bottom':
-								x2 = anchorPointsTarget.bottom.x;
-								y2 = anchorPointsTarget.bottom.y;
-								break;
-							case 'left':
-								x2 = anchorPointsTarget.left.x;
-								y2 = anchorPointsTarget.left.y;
-								break;
-							default:
-								break;
+						if (nodeType == NodeTypes.CIRCLE) {
+							switch (connectedStartPoint.getAttributeNS(null, 'posid')) {
+								case 'top':
+									x1 = anchorPointsSource.top.x;
+									y1 = anchorPointsSource.top.y;
+									break;
+								case 'right':
+									x1 = anchorPointsSource.right.x;
+									y1 = anchorPointsSource.right.y;
+									break;
+								case 'bottom':
+									x1 = anchorPointsSource.bottom.x;
+									y1 = anchorPointsSource.bottom.y;
+									break;
+								case 'left':
+									x1 = anchorPointsSource.left.x;
+									y1 = anchorPointsSource.left.y;
+									break;
+								default:
+									break;
+							}
+
+							switch (connectedEndPoint.getAttributeNS(null, 'posid')) {
+								case 'top':
+									x2 = anchorPointsTarget.top.x;
+									y2 = anchorPointsTarget.top.y;
+									break;
+								case 'right':
+									x2 = anchorPointsTarget.right.x;
+									y2 = anchorPointsTarget.right.y;
+									break;
+								case 'bottom':
+									x2 = anchorPointsTarget.bottom.x;
+									y2 = anchorPointsTarget.bottom.y;
+									break;
+								case 'left':
+									x2 = anchorPointsTarget.left.x;
+									y2 = anchorPointsTarget.left.y;
+									break;
+								default:
+									break;
+							}
 						}
 
 						lines[i].setAttributeNS(null, 'x1', x1);

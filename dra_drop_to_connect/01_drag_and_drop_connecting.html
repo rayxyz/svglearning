@@ -7,15 +7,24 @@
 			height: 100%;
 			margin: auto;
 		}
+
 		#left-panel {
-			width: 200px;
+			width: 120px;
 			height: 100%;
 			background-color: blueviolet;
 			float: left;
 		}
 
+		#left-panel .shape {
+			background-color: azure;
+			margin: 10px;
+			width: 80%;
+			height: 100px;
+			float: left;
+		}
+
 		#svg-area {
-			width: calc(100% - 200px);
+			width: calc(100% - 120px);
 			float: right;
 			height: 100%;
 		}
@@ -38,7 +47,18 @@
 
 <body>
 	<div id="left-panel">
-		sdfsdf
+		<div class="shape">
+
+		</div>
+		<div class="shape">
+
+		</div>
+		<div class="shape">
+
+		</div>
+		<div class="shape">
+
+		</div>
 	</div>
 	<div id="svg-area">
 		<svg class="example" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20" onload="init(evt)">

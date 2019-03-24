@@ -65,10 +65,10 @@
 			<span>节点形状</span>
 		</div>
 		<div class="shape" shape-type="rect">
-			<img src="rect.png" />
+			<img src="./rect.png" />
 		</div>
 		<div class="shape" shape-type="circle">
-			<img src="circle.png" />
+			<img src="./circle.png" />
 		</div>
 		<div class="shape">
 
@@ -161,6 +161,18 @@
 				x: (evt.clientX - CTM.e) / CTM.a,
 				y: (evt.clientY - CTM.f) / CTM.d
 			};
+		}
+
+		function calcAngle(opposite, hypotenuse) {
+			return Math.asin(opposite / hypotenuse);
+		}
+
+		function calcDegreesFromAngle(angle) {
+			return angle / 2 / Math.PI * 360;
+		}
+
+		function calcDegreesFromSides(opposite, hypotenuse) {
+			return calcDegreesFromAngle(calcAngle(opposite, hypotenuse));
 		}
 
 		function getShapeType(shape) {
@@ -401,15 +413,13 @@
 
 			if (shapeType === ShapeTypes.RECT) {
 				bbox = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-				bbox.setAttribute('id', 'rect_' + Date.now());
+				bbox.setAttribute('id', 'bbox_' + Date.now());
 				bbox.setAttributeNS(null, 'class', BBoxStyle.class);
 				bbox.setAttributeNS(null, 'shape-type', BBoxStyle.shapeType);
 				bbox.setAttributeNS(null, 'x', parseFloat(shape.getAttributeNS(null, 'x')));
 				bbox.setAttributeNS(null, 'y', parseFloat(shape.getAttributeNS(null, 'y')));
 				bbox.setAttributeNS(null, 'width', parseFloat(shape.getAttributeNS(null, 'width')));
 				bbox.setAttributeNS(null, 'height', parseFloat(shape.getAttributeNS(null, 'height')));
-				bbox.setAttributeNS(null, 'rx', parseFloat(shape.getAttributeNS(null, 'ry')));
-				bbox.setAttributeNS(null, 'ry', parseFloat(shape.getAttributeNS(null, 'ry')));
 				bbox.setAttributeNS(null, 'fill', BBoxStyle.fill);
 				bbox.setAttributeNS(null, 'stroke', BBoxStyle.stroke);
 				bbox.setAttributeNS(null, 'stroke-width', BBoxStyle.strokeWidth);
@@ -418,11 +428,71 @@
 			}
 
 			if (shapeType === ShapeTypes.CIRCLE) {
+				let cx = parseFloat(shape.getAttributeNS(null, 'cx'));
+				let cy = parseFloat(shape.getAttributeNS(null, 'cy'));
+				let r = parseFloat(shape.getAttributeNS(null, 'r'));
 
+				let x = cx - r;
+				let y = cy - r;
+				let width = 2 * r;
+				let height = 2 * r;
+
+				bbox = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+				bbox.setAttribute('id', 'bbox_' + Date.now());
+				bbox.setAttributeNS(null, 'class', BBoxStyle.class);
+				bbox.setAttributeNS(null, 'shape-type', BBoxStyle.shapeType);
+				bbox.setAttributeNS(null, 'x', x);
+				bbox.setAttributeNS(null, 'y', y);
+				bbox.setAttributeNS(null, 'width', width);
+				bbox.setAttributeNS(null, 'height', height);
+				bbox.setAttributeNS(null, 'fill', BBoxStyle.fill);
+				bbox.setAttributeNS(null, 'stroke', BBoxStyle.stroke);
+				bbox.setAttributeNS(null, 'stroke-width', BBoxStyle.strokeWidth);
+
+				svg.appendChild(bbox);
 			}
 
 			if (shapeType === ShapeTypes.LINE) {
+				let x1 = parseFloat(shape.getAttributeNS(null, 'x1'));
+				let y1 = parseFloat(shape.getAttributeNS(null, 'y1'));
+				let x2 = parseFloat(shape.getAttributeNS(null, 'x2'));
+				let y2 = parseFloat(shape.getAttributeNS(null, 'y2'));
+				let height = 0.2
+				let opposite = Math.abs(y2 - y1);
+				let width = hypotenuse = Math.sqrt(Math.pow(Math.abs(x2 - x1), 2) + Math.pow(Math.abs(y2 - y1), 2))
+				let degreeToRotate = 0;
 
+				let x = x1;
+				let y = y1 - height / 2;
+
+				if (x1 < x2 && y1 < y2) {
+					degreeToRotate = calcDegreesFromSides(opposite, hypotenuse);
+				}
+				if (x1 < x2 && y1 > y2) {
+					degreeToRotate = -calcDegreesFromSides(opposite, hypotenuse);
+				}
+				if (x1 > x2 && y1 > y2) {
+					degreeToRotate = 180 + calcDegreesFromSides(opposite, hypotenuse);
+				}
+				if (x1 > x2 && y1 < y2) {
+					degreeToRotate = 180 - calcDegreesFromSides(opposite, hypotenuse);
+				}
+				console.log('degrees need to rotate: ', degreeToRotate);
+
+				bbox = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+				bbox.setAttribute('id', 'bbox_' + Date.now());
+				bbox.setAttributeNS(null, 'class', BBoxStyle.class);
+				bbox.setAttributeNS(null, 'shape-type', BBoxStyle.shapeType);
+				bbox.setAttributeNS(null, 'x', x);
+				bbox.setAttributeNS(null, 'y', y);
+				bbox.setAttributeNS(null, 'width', width);
+				bbox.setAttributeNS(null, 'height', height);
+				bbox.setAttributeNS(null, 'fill', BBoxStyle.fill);
+				bbox.setAttributeNS(null, 'stroke', BBoxStyle.stroke);
+				bbox.setAttributeNS(null, 'stroke-width', BBoxStyle.strokeWidth);
+				bbox.setAttributeNS(null, 'transform', 'rotate(' + degreeToRotate + ', ' + x + ', ' + y + ')');
+
+				svg.appendChild(bbox);
 			}
 		}
 
@@ -430,7 +500,7 @@
 		function init(evt) {
 			let svg = evt.target;
 
-			let mousedClicked = false;
+			let mouseDown = false;
 			let markerArrowCreated = false;
 			let lineDrawable = false;
 			let lineCreated = false;
@@ -445,14 +515,38 @@
 			let startPoint;
 			let endPoint;
 
-			let selectedElement, selectedElementOffset;
+			let selectedElement;
+			let selectedElementOffset;
+			let bboxedElements = [];
 
 			// svg.addEventListener('mouseover', decide)
 			svg.addEventListener('mousedown', startDrag);
 			svg.addEventListener('mousemove', drag);
 			svg.addEventListener('mouseup', endDrag);
 
-			document.body.addEventListener('mousemove', (evt) => {
+			document.addEventListener('keydown', (evt) => {
+				if (evt.key == 'Delete') {
+					let linesTobeDeleted = [];
+					let eleIdList = [];
+					for (let i = 0; i < bboxedElements.length; i++) {
+						eleIdList.push(bboxedElements[i].getAttributeNS(null, 'id'));
+					}
+					for (let i = 0; i < lines.length; i++) {
+						for (let j = 0; j < eleIdList.length; j++) {
+							// console.log('lines[i].source.getAttributeNS(null, id): ', lines[i].source.getAttributeNS(null, 'id'));
+							// console.log('lines[i].target.getAttributeNS(null, id): ', lines[i].target.getAttributeNS(null, 'id'));
+							// console.log('lines[i]: ', lines[i]);
+							if (eleIdList[j] == lines[i].source.getAttributeNS(null, 'id') || 
+							eleIdList[j] == lines[i].target.getAttributeNS(null, 'id')) {
+								lines[i].remove();
+							}
+						}
+					}
+					removeBboxedElements();
+				}
+			});
+
+			document.addEventListener('mousemove', (evt) => {
 				isNearAnyDraggableShape = false;
 
 				Array.prototype.slice.call(
@@ -487,7 +581,7 @@
 						point.addEventListener('mouseout', (evt) => {
 							console.log('Mouse outs me....');
 							evt.target.setAttributeNS(null, 'stroke', 'grey')
-							if (!mousedClicked) {
+							if (!mouseDown) {
 								lineDrawable = false;
 							}
 						});
@@ -518,6 +612,8 @@
 							});
 							line.addEventListener('click', (evt) => {
 								console.log('connecting line cliked');
+								addBBox(svg, line);
+								bboxedElements.push(line);
 							});
 							line.listenerAdded = true;
 						}
@@ -529,6 +625,7 @@
 							shape.addEventListener('click', (evt) => {
 								console.log('rect cliked');
 								addBBox(svg, shape);
+								bboxedElements.push(shape);
 							});
 							shape.listenerAdded = true;
 						}
@@ -536,7 +633,7 @@
 			});
 
 			function startDrag(evt) {
-				mousedClicked = true;
+				mouseDown = true;
 				if (lineDrawable) {
 					startPoint = getMousePosition(svg, evt);
 					endPoint = startPoint;
@@ -564,10 +661,10 @@
 
 			function drag(evt) {
 				dragging = true;
-				if (mousedClicked && lineDrawable) {
+				if (mouseDown && lineDrawable) {
 					if (!markerArrowCreated && lineCreated) {
 						///////////// Magic happens here.
-						line.setAttributeNS(null, "marker-start", "url(#doesnt-exist)");
+						line.setAttributeNS(null, "marker-start", null);
 						line.setAttributeNS(null, "marker-end", "url(#markerArrow)");
 						markerArrowCreated = true;
 						//////////////
@@ -607,7 +704,6 @@
 
 					updateLines(selectedElement);
 				}
-
 			}
 
 			function endDrag(evt) {
@@ -630,7 +726,7 @@
 				} else {
 					removeLine(line);
 				}
-				mousedClicked = false;
+				mouseDown = false;
 				markerArrowCreated = false;
 				lineDrawable = false;
 				lineCreated = false;
@@ -639,7 +735,29 @@
 				lineTargetObj = null;
 				console.log('number of lines: ', lines.length)
 
+				if (!event.ctrlKey) {
+					if (bboxedElements.length > 0) {
+						removeBboxes();
+						bboxedElements = []
+					}
+				}
+
 				selectedElement = null;
+			}
+
+			function removeBboxes() {
+				Array.prototype.slice.call(document.getElementsByClassName('bbox-rect')).forEach((bbox) => {
+					bbox.remove();
+				})
+			}
+
+			function removeBboxedElements() {
+				if (bboxedElements.length > 0) {
+					Array.prototype.slice.call(bboxedElements).forEach((ele) => {
+						ele.remove();
+					});
+					removeBboxes();
+				}
 			}
 
 			function updateLines(selectedElement) {

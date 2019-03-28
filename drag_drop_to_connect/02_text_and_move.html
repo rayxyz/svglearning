@@ -1,0 +1,139 @@
+<html>
+
+<head>
+	<style>
+		body {
+			width: 100%;
+			height: 100%;
+			margin: auto;
+		}
+
+		#left-panel {
+			width: 100px;
+			height: 100%;
+			/* background-color: blueviolet; */
+			border-right: 2px solid #EFF1F2;
+			float: left;
+		}
+
+		#left-panel .panel-title {
+			font-family: Arial;
+			height: 30px;
+			margin-bottom: 20px;
+			background-color: #E4E4E4;
+			text-align: center;
+		}
+
+		#left-panel .shape {
+			/* background-color: azure; */
+			/* margin: 10px; */
+			width: 100%;
+			height: 80px;
+			float: left;
+			background-color: white;
+		}
+
+		#left-panel .shape img {
+			width: 95%;
+		}
+
+		#svg-area {
+			width: calc(100% - 102px);
+			float: right;
+			height: 100%;
+		}
+
+		.example {
+			/* border: 1px solid red; */
+			height: 100%;
+			width: 100%;
+		}
+
+		.static {
+			cursor: not-allowed;
+		}
+
+		.draggable {
+			cursor: move;
+		}
+	</style>
+</head>
+
+<body>
+	<div id="svg-area">
+		<svg id="svg-container" class="example" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20">
+			<defs id="defs">
+				<marker id="markerArrow" markerWidth="13" markerHeight="13" refX="2" refY="6" orient="auto">
+					<path d="M2,2 L2,11 L10,6 L2,2" style="fill: black;" />
+				</marker>
+				<linearGradient id="greenGradient">
+					<stop offset="1%" stop-color="#ABD8A0" />
+					<stop offset="99%" stop-color="#58AF2F" />
+				</linearGradient>
+				<linearGradient id="yellowGradient">
+					<stop offset="1%" stop-color="#FFC742" />
+					<stop offset="99%" stop-color="#FFAB35" />
+				</linearGradient>
+			</defs>
+			<g id="circle-node" onclick="go(evt)">
+				<circle id="circle-node-circle" cx="5" cy="10" r="1" fill="url(#greenGradient)"></circle>
+				<text x="4" y="10" font-size="0.4" fill="red">I love SVG!</text>
+				<text x="4" y="10.4" font-size="0.4" fill="white">I love SVG!</text>
+			</g>
+			<!-- <circle id="circle-node-circle" cx="5" cy="10" r="1" fill="gray"></circle> -->
+		</svg>
+	</div>
+
+	<script>
+		var circleNode = document.querySelector('#circle-node');
+		console.log('circle-node: ', circleNode);
+		var circleNodeCircle = document.getElementById('circle-node-circle');
+
+		// go();
+
+
+		function go() {
+			let cx = parseFloat(circleNodeCircle.getAttributeNS(null, 'cx'))
+			let cy = parseFloat(circleNodeCircle.getAttributeNS(null, 'cy'))
+			console.log('circle-node-circle.cx: ', cx, ' circle-node-circle.cy: ', cy);
+			// let mat = circleNode.transform.baseVal.consolidate().matrix;
+			// console.log('transform matrix: ', mat);
+
+			// circleNodeCircle.setAttributeNS(null, 'cx', cx + mat.e);
+			// circleNodeCircle.setAttributeNS(null, 'cy', cy + mat.f);
+
+			// cx = parseFloat(circleNodeCircle.getAttributeNS(null, 'cx'))
+			// cy = parseFloat(circleNodeCircle.getAttributeNS(null, 'cy'))
+
+
+			// console.log('new cx: ', cx, ', new cy: ', cy);
+
+			move(circleNodeCircle.parentNode, -1, -1);
+		}
+
+		function move(ele, x, y) {
+			if (!ele) return;
+			if (ele.transform.baseVal.numberOfItems == 0) {
+				ele.setAttributeNS(null, 'transform', 'translate(' + x + ', ' + y + ')')
+			} else {
+				transform = ele.transform.baseVal.getItem(0);
+				transform.setMatrix(transform.matrix.translate(x, y));
+			}
+			console.log('translation maxtrix: ', getTranslationMatrix(ele));
+		}
+
+		function getTranslationMatrix(ele) {
+			if (!ele) return;
+			if (!ele.transform) return;
+			transform = ele.transform.baseVal.getItem(0);
+			return transform.matrix;
+		}
+
+		// function removeTransform(ele) {
+		// 	if (!ele) return;
+		// 	circleNode.removeAttribute('transform');
+		// } 
+	</script>
+</body>
+
+</html>

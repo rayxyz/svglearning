@@ -1,0 +1,503 @@
+<html>
+
+<head>
+	<style>
+		body {
+			width: 100%;
+			height: 100%;
+			margin: auto;
+		}
+
+		#left-panel {
+			width: 100px;
+			height: 100%;
+			/* background-color: blueviolet; */
+			border-right: 2px solid #EFF1F2;
+			float: left;
+		}
+
+		#left-panel .panel-title {
+			font-family: Arial;
+			height: 30px;
+			margin-bottom: 20px;
+			background-color: #E4E4E4;
+			text-align: center;
+		}
+
+		#left-panel .shape {
+			/* background-color: azure; */
+			/* margin: 10px; */
+			width: 100%;
+			height: 80px;
+			float: left;
+			background-color: white;
+		}
+
+		#left-panel .shape img {
+			width: 95%;
+		}
+
+		#svg-area {
+			width: calc(100% - 102px);
+			float: right;
+			height: 100%;
+		}
+
+		.example {
+			/* border: 1px solid red; */
+			height: 100%;
+			width: 100%;
+		}
+
+		.static {
+			cursor: not-allowed;
+		}
+
+		.draggable {
+			cursor: move;
+		}
+	</style>
+	<script src="./ahezime.svg.js"></script>
+</head>
+
+<body>
+	<div id="left-panel">
+		<div class="panel-title">
+			<span>节点形状</span>
+		</div>
+		<div class="shape" shape-type="rect">
+			<img src="./rect.png" />
+		</div>
+		<div class="shape" shape-type="circle">
+			<img src="./circle.png" />
+		</div>
+		<div class="shape">
+
+		</div>
+		<div class="shape">
+
+		</div>
+	</div>
+	<div id="svg-area">
+		<svg id="svg-container" class="example" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20" onload="init(evt)">
+			<defs id="defs">
+				<marker id="markerArrow" markerWidth="13" markerHeight="13" refX="2" refY="6" orient="auto">
+					<path d="M2,2 L2,11 L10,6 L2,2" style="fill: black;" />
+				</marker>
+				<linearGradient id="greenGradient">
+					<stop offset="1%" stop-color="#ABD8A0" />
+					<stop offset="99%" stop-color="#58AF2F" />
+				</linearGradient>
+				<linearGradient id="yellowGradient">
+					<stop offset="1%" stop-color="#FFC742" />
+					<stop offset="99%" stop-color="#FFAB35" />
+				</linearGradient>
+			</defs>
+
+		</svg>
+	</div>
+
+	<script>
+		// import * as ahezimsvg from './ahezime.svg.js';
+
+		var SVGXMLNS = 'http://www.w3.org/2000/svg';
+		let defs = document.getElementById('defs');
+		let lines = [];
+	
+		// Initializing the svg container
+		function init(evt) {
+			let svg = evt.target;
+
+			let mouseDown = false;
+			let markerArrowCreated = false;
+			let lineDrawable = false;
+			let lineCreated = false;
+			let connectingAnchorPointsCreated = false;
+
+			let isNearAttractivePoint = false;
+			let attrativePoint = null;
+
+			let line;
+			let lineSourceObj;
+			let lineTargetObj;
+			let startPoint;
+			let endPoint;
+
+			let selectedElement;
+			let selectedElementOffset;
+			let bboxedElements = [];
+
+			// svg.addEventListener('mouseover', decide)
+			svg.addEventListener('mousedown', startDrag);
+			svg.addEventListener('mousemove', drag);
+			svg.addEventListener('mouseup', endDrag);
+
+			document.addEventListener('keydown', (evt) => {
+				if (evt.key == 'Delete') {
+					let linesTobeDeleted = [];
+					let eleIdList = [];
+					for (let i = 0; i < bboxedElements.length; i++) {
+						eleIdList.push(bboxedElements[i].getAttributeNS(null, 'id'));
+					}
+					for (let i = 0; i < lines.length; i++) {
+						for (let j = 0; j < eleIdList.length; j++) {
+							// console.log('lines[i].source.getAttributeNS(null, id): ', lines[i].source.getAttributeNS(null, 'id'));
+							// console.log('lines[i].target.getAttributeNS(null, id): ', lines[i].target.getAttributeNS(null, 'id'));
+							// console.log('lines[i]: ', lines[i]);
+							if (eleIdList[j] == lines[i].source.getAttributeNS(null, 'id') || 
+							eleIdList[j] == lines[i].target.getAttributeNS(null, 'id')) {
+								lines[i].remove();
+							}
+						}
+					}
+					removeBboxedElements();
+				}
+			});
+
+			document.addEventListener('mousemove', (evt) => {
+				isNearAnyDraggableShape = false;
+
+				Array.prototype.slice.call(
+					document.querySelectorAll('.draggable')).forEach((shape) => {
+						if (isNear(svg, shape, 0.3, evt)) {
+							isNearAnyDraggableShape = true;
+							if (!connectingAnchorPointsCreated) {
+								createConnectingAnchorPoints(svg, shape);
+								connectingAnchorPointsCreated = true;
+							}
+							if (lineSourceObj && lineDrawable) {
+								if (checkMouseInsideBoundary(svg, evt, shape)) {
+									lineTargetObj = shape;
+								}
+							} else {
+								lineSourceObj = shape;
+							}
+						}
+					});
+
+				if (!isNearAnyDraggableShape) {
+					removeConnectingAnchorPoints();
+					connectingAnchorPointsCreated = false;
+				}
+
+				Array.prototype.slice.call(
+					document.querySelectorAll('.connecting-anchor-point')).forEach((point) => {
+						point.addEventListener('mouseover', (evt) => {
+							console.log('Mouse overs me');
+							lineDrawable = true;
+						});
+						point.addEventListener('mouseout', (evt) => {
+							console.log('Mouse outs me....');
+							evt.target.setAttributeNS(null, 'stroke', 'grey')
+							if (!mouseDown) {
+								lineDrawable = false;
+							}
+						});
+
+						if (lineDrawable) {
+							if (isNear(svg, point, 0.4, evt)) {
+								point.setAttributeNS(null, 'stroke', 'yellow');
+								point.setAttributeNS(null, 'stroke-width', '0.1');
+								isNearAttractivePoint = true;
+								attrativePoint = point;
+							} else {
+								point.setAttributeNS(null, 'stroke', null);
+								point.setAttributeNS(null, 'stroke-width', 0);
+							}
+						}
+					});
+
+				Array.prototype.slice.call(
+					document.querySelectorAll('.connecting-line')).forEach((line) => {
+						if (line && !line.listenerAdded) {
+							line.addEventListener('mouseover', (evt) => {
+								console.log('mouse overs connecting line');
+								line.setAttributeNS(null, 'stroke', 'green');
+							});
+							line.addEventListener('mouseout', (evt) => {
+								console.log('mouse outs connecting line');
+								line.setAttributeNS(null, 'stroke', ConnectingLineShapeStyle.stroke);
+							});
+							line.addEventListener('click', (evt) => {
+								console.log('connecting line cliked');
+								addBBox(svg, line);
+								bboxedElements.push(line);
+							});
+							line.listenerAdded = true;
+						}
+					});
+
+				Array.prototype.slice.call(
+					document.querySelectorAll('.draggable')).forEach((shape) => {
+						if (shape && !shape.listenerAdded) {
+							shape.addEventListener('click', (evt) => {
+								console.log('rect cliked');
+								addBBox(svg, shape);
+								bboxedElements.push(shape);
+							});
+							shape.listenerAdded = true;
+						}
+					});
+			});
+
+			function startDrag(evt) {
+				mouseDown = true;
+				if (lineDrawable) {
+					startPoint = getMousePosition(svg, evt);
+					endPoint = startPoint;
+				} else {
+					removeConnectingAnchorPoints();
+				}
+
+				if (evt.target.classList.contains('draggable')) {
+					console.log('Starting drag...');
+					selectedElement = evt.target;
+					selectedElementOffset = getMousePosition(svg, evt);
+					shapeType = getShapeType(selectedElement);
+					if (shapeType === ShapeTypes.RECT) {
+						selectedElementOffset.x -= parseFloat(selectedElement.getAttributeNS(null, 'x'));
+						selectedElementOffset.y -= parseFloat(selectedElement.getAttributeNS(null, 'y'));
+					}
+					if (shapeType === ShapeTypes.CIRCLE) {
+						selectedElementOffset.cx = selectedElementOffset.x;
+						selectedElementOffset.cy = selectedElementOffset.y;
+						selectedElementOffset.cx -= parseFloat(selectedElement.getAttributeNS(null, 'cx'));
+						selectedElementOffset.cy -= parseFloat(selectedElement.getAttributeNS(null, 'cy'));
+					}
+				}
+			}
+
+			function drag(evt) {
+				dragging = true;
+				if (mouseDown && lineDrawable) {
+					if (!markerArrowCreated && lineCreated) {
+						///////////// Magic happens here.
+						line.setAttributeNS(null, "marker-start", null);
+						line.setAttributeNS(null, "marker-end", "url(#markerArrow)");
+						markerArrowCreated = true;
+						//////////////
+					}
+					endPoint = getMousePosition(svg, evt);
+					if (startPoint && endPoint && !(startPoint.x == endPoint.x && startPoint.y == endPoint.y)) {
+						// console.log('lineCreated: ', lineCreated, ', isNearAttractivePoint: ', isNearAttractivePoint, ', attrativePoint: ', attrativePoint);
+						if (!lineCreated && isNearAttractivePoint && attrativePoint) {
+							lineTargetObj = null;
+							startPoint.x = parseFloat(attrativePoint.getAttributeNS(null, 'cx'));
+							startPoint.y = parseFloat(attrativePoint.getAttributeNS(null, 'cy'));
+							line = createConnectingLine(startPoint, endPoint, lineSourceObj, attrativePoint);
+							svg.appendChild(line);
+							lineCreated = true;
+						}
+						line.setAttributeNS(null, 'x1', startPoint.x);
+						line.setAttributeNS(null, 'y1', startPoint.y);
+						line.setAttributeNS(null, 'x2', endPoint.x);
+						line.setAttributeNS(null, 'y2', endPoint.y);
+					}
+				}
+
+				if (selectedElement) {
+					console.log('Dragging...');
+					evt.preventDefault();
+
+					let coord = getMousePosition(svg, evt);
+					let shapeType = getShapeType(selectedElement);
+					if (shapeType == ShapeTypes.RECT) {
+						selectedElement.setAttributeNS(null, 'x', coord.x - selectedElementOffset.x);
+						selectedElement.setAttributeNS(null, 'y', coord.y - selectedElementOffset.y);
+					}
+					if (shapeType == ShapeTypes.CIRCLE) {
+						selectedElement.setAttributeNS(null, 'cx', coord.x - selectedElementOffset.cx);
+						selectedElement.setAttributeNS(null, 'cy', coord.y - selectedElementOffset.cy);
+					}
+
+					updateLines(selectedElement);
+				}
+			}
+
+			function endDrag(evt) {
+				if (lineCreated) {
+					if (isNearAttractivePoint && attrativePoint && lineTargetObj) {
+						if (lineSourceObj && lineTargetObj && lineSourceObj.getAttributeNS(null, 'id') == lineTargetObj.getAttributeNS(null, 'id')) {
+							removeLine(line);
+						} else {
+							endPoint.x = parseFloat(attrativePoint.getAttributeNS(null, 'cx'));
+							endPoint.y = parseFloat(attrativePoint.getAttributeNS(null, 'cy'));
+							line.setAttributeNS(null, 'x2', endPoint.x);
+							line.setAttributeNS(null, 'y2', endPoint.y);
+							line.connectedEndPointRaw = attrativePoint;
+							line.target = lineTargetObj;
+							lines.push(line);
+						}
+					} else {
+						removeLine(line);
+					}
+				} else {
+					removeLine(line);
+				}
+				mouseDown = false;
+				markerArrowCreated = false;
+				lineDrawable = false;
+				lineCreated = false;
+				line = null;
+				lineSourceObj = null;
+				lineTargetObj = null;
+				console.log('number of lines: ', lines.length)
+
+				if (!event.ctrlKey) {
+					if (bboxedElements.length > 0) {
+						removeBboxes();
+						bboxedElements = []
+					}
+				}
+
+				selectedElement = null;
+			}
+
+			function removeBboxes() {
+				Array.prototype.slice.call(document.getElementsByClassName('bbox-rect')).forEach((bbox) => {
+					bbox.remove();
+				})
+			}
+
+			function removeBboxedElements() {
+				if (bboxedElements.length > 0) {
+					Array.prototype.slice.call(bboxedElements).forEach((ele) => {
+						ele.remove();
+					});
+					removeBboxes();
+				}
+			}
+
+			function updateLines(selectedElement) {
+				let shapeType = getShapeType(selectedElement);
+
+				for (let i = 0; i < lines.length; i++) {
+					if (lines[i].connectedStartPointRaw && lines[i].connectedEndPointRaw) {
+						let connectedStartPoint = lines[i].connectedStartPointRaw;
+						let connectedEndPoint = lines[i].connectedEndPointRaw;
+
+						let x1 = parseFloat(lines[i].getAttributeNS(null, 'x1'));
+						let y1 = parseFloat(lines[i].getAttributeNS(null, 'y1'));
+						let x2 = parseFloat(lines[i].getAttributeNS(null, 'x2'));
+						let y2 = parseFloat(lines[i].getAttributeNS(null, 'y2'));
+
+						if (shapeType === ShapeTypes.RECT) {
+							let anchorPointsSource = calculateRectConnectingAnchorPoints(lines[i].source)
+							let anchorPointsTarget = calculateRectConnectingAnchorPoints(lines[i].target); // target object
+
+							switch (connectedStartPoint.getAttributeNS(null, 'posid')) {
+								case 'top':
+									x1 = anchorPointsSource.top.x;
+									y1 = anchorPointsSource.top.y;
+									break;
+								case 'right':
+									x1 = anchorPointsSource.right.x;
+									y1 = anchorPointsSource.right.y;
+									break;
+								case 'bottom':
+									x1 = anchorPointsSource.bottom.x;
+									y1 = anchorPointsSource.bottom.y;
+									break;
+								case 'left':
+									x1 = anchorPointsSource.left.x;
+									y1 = anchorPointsSource.left.y;
+									break;
+								default:
+									break;
+							}
+
+							switch (connectedEndPoint.getAttributeNS(null, 'posid')) {
+								case 'top':
+									x2 = anchorPointsTarget.top.x;
+									y2 = anchorPointsTarget.top.y;
+									break;
+								case 'right':
+									x2 = anchorPointsTarget.right.x;
+									y2 = anchorPointsTarget.right.y;
+									break;
+								case 'bottom':
+									x2 = anchorPointsTarget.bottom.x;
+									y2 = anchorPointsTarget.bottom.y;
+									break;
+								case 'left':
+									x2 = anchorPointsTarget.left.x;
+									y2 = anchorPointsTarget.left.y;
+									break;
+								default:
+									break;
+							}
+						}
+
+						if (shapeType == ShapeTypes.CIRCLE) {
+							let anchorPointsSource = calculateCircleConnectingAnchorPoints(lines[i].source)
+							let anchorPointsTarget = calculateCircleConnectingAnchorPoints(lines[i].target); // target object
+
+							switch (connectedStartPoint.getAttributeNS(null, 'posid')) {
+								case 'north':
+									x1 = anchorPointsSource.north.x;
+									y1 = anchorPointsSource.north.y;
+									break;
+								case 'east':
+									x1 = anchorPointsSource.east.x;
+									y1 = anchorPointsSource.east.y;
+									break;
+								case 'south':
+									x1 = anchorPointsSource.south.x;
+									y1 = anchorPointsSource.south.y;
+									break;
+								case 'west':
+									x1 = anchorPointsSource.west.x;
+									y1 = anchorPointsSource.west.y;
+									break;
+								default:
+									break;
+							}
+
+							switch (connectedEndPoint.getAttributeNS(null, 'posid')) {
+								case 'north':
+									x2 = anchorPointsTarget.north.x;
+									y2 = anchorPointsTarget.north.y;
+									break;
+								case 'east':
+									x2 = anchorPointsTarget.east.x;
+									y2 = anchorPointsTarget.east.y;
+									break;
+								case 'south':
+									x2 = anchorPointsTarget.south.x;
+									y2 = anchorPointsTarget.south.y;
+									break;
+								case 'west':
+									x2 = anchorPointsTarget.west.x;
+									y2 = anchorPointsTarget.west.y;
+									break;
+								default:
+									break;
+							}
+						}
+
+						lines[i].setAttributeNS(null, 'x1', x1);
+						lines[i].setAttributeNS(null, 'y1', y1);
+						lines[i].setAttributeNS(null, 'x2', x2);
+						lines[i].setAttributeNS(null, 'y2', y2);
+					}
+				}
+			}
+		}
+
+		// drag & drop
+		let svg = document.querySelector('#svg-container');
+		Array.prototype.slice.call(document.querySelectorAll('.shape')).forEach((shape) => {
+			shape.addEventListener('click', (evt) => {
+				let shapeType = shape.getAttribute('shape-type');
+				if (shapeType === ShapeTypes.CIRCLE) {
+					svg.appendChild(drawCircleShape(evt));
+				}
+				if (shapeType === ShapeTypes.RECT) {
+					svg.appendChild(drawRectShape(evt));
+				}
+			})
+		});
+	</script>
+</body>
+
+</html>

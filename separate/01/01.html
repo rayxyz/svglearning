@@ -43,6 +43,16 @@
 			height: 100%;
 		}
 
+		#svg-container {
+			width: 100%;
+			height: 100%;
+		}
+
+		#canvas {
+			width: 100%;
+			height: 100%;
+		}
+
 		.example {
 			/* border: 1px solid red; */
 			height: 100%;
@@ -92,8 +102,15 @@
 					<stop offset="1%" stop-color="#FFC742" />
 					<stop offset="99%" stop-color="#FFAB35" />
 				</linearGradient>
+				<pattern id="smallGrid" width="0.2" height="0.2" patternUnits="userSpaceOnUse">
+					<path d="M 0.2 0 L 0 0 0 0.2" fill="none" stroke="gray" stroke-width="0.01" />
+				</pattern>
+				<pattern id="grid" width="2" height="2" patternUnits="userSpaceOnUse">
+					<rect width="2" height="2" fill="url(#smallGrid)" />
+					<path d="M 2 0 L 0 0 0 2" fill="none" stroke="gray" stroke-width="0.02" />
+				</pattern>
 			</defs>
-
+			<!-- <rect id="canvas" width="100%" height="100%" fill="url(#grid)" /> -->
 		</svg>
 	</div>
 
@@ -126,6 +143,10 @@
 			let selectedElement;
 			let selectedElementOffset;
 			let bboxedElements = [];
+			
+			let crect = svg.getBoundingClientRect();
+			console.log('svg width: ', crect.width, ', svg height: ', crect.height);
+			// svg.setAttributeNS(null, 'viewBox', '0 0 ' + crect.width + ' ' + crect.height);
 
 			// svg.addEventListener('mouseover', decide)
 			svg.addEventListener('mousedown', startDrag);
@@ -265,10 +286,18 @@
 						}
 					}
 					if (shapeType === ShapeTypes.CIRCLE) {
-						selectedElementOffset.cx = selectedElementOffset.x;
-						selectedElementOffset.cy = selectedElementOffset.y;
-						selectedElementOffset.cx -= parseFloat(selectedElement.getAttributeNS(null, 'cx'));
-						selectedElementOffset.cy -= parseFloat(selectedElement.getAttributeNS(null, 'cy'));
+						let translateMatrix = getTranslationMatrix(selectedElement.parentNode);
+						if (translateMatrix) {
+							selectedElementOffset.cx = selectedElementOffset.x;
+							selectedElementOffset.cy = selectedElementOffset.y;
+							selectedElementOffset.cx -= (parseFloat(selectedElement.getAttributeNS(null, 'cx')) + translateMatrix.e);
+							selectedElementOffset.cy -= (parseFloat(selectedElement.getAttributeNS(null, 'cy')) + translateMatrix.f);
+						} else {
+							selectedElementOffset.cx = selectedElementOffset.x;
+							selectedElementOffset.cy = selectedElementOffset.y;
+							selectedElementOffset.cx -= parseFloat(selectedElement.getAttributeNS(null, 'cx'));
+							selectedElementOffset.cy -= parseFloat(selectedElement.getAttributeNS(null, 'cy'));
+						}
 					}
 				}
 			}
@@ -305,33 +334,49 @@
 					console.log('Dragging...');
 					evt.preventDefault();
 
-					let mousePost = getMousePosition(svg, evt);
+					let mousePos = getMousePosition(svg, evt);
 					let shapeType = getShapeType(selectedElement);
 					let node = selectedElement.parentNode;
+					let translatex = translatey = 0;
 
 					if (shapeType == ShapeTypes.RECT) {
 						if (node) {
-							console.log('Moving the node...');
+							console.log('Moving rect node...');
 							let translateMatrix = getTranslationMatrix(node);
 							if (translateMatrix) {
-								let translatex = mousePost.x - (selectedElementOffset.x + parseFloat(selectedElement.getAttributeNS(null, 'x')) + translateMatrix.e);
-								let translatey = mousePost.y - (selectedElementOffset.y + parseFloat(selectedElement.getAttributeNS(null, 'y')) + translateMatrix.f);
+								translatex = mousePos.x - (selectedElementOffset.x + parseFloat(selectedElement.getAttributeNS(null, 'x')) + translateMatrix.e);
+								translatey = mousePos.y - (selectedElementOffset.y + parseFloat(selectedElement.getAttributeNS(null, 'y')) + translateMatrix.f);
 								move(node, translatex, translatey);
 							} else {
-								let translatex = mousePost.x - selectedElementOffset.x - parseFloat(selectedElement.getAttributeNS(null, 'x'));
-								let translatey = mousePost.y - selectedElementOffset.y - parseFloat(selectedElement.getAttributeNS(null, 'y'));
+								translatex = mousePos.x - (selectedElementOffset.x + parseFloat(selectedElement.getAttributeNS(null, 'x')));
+								translatey = mousePos.y - (selectedElementOffset.y + parseFloat(selectedElement.getAttributeNS(null, 'y')));
 								move(node, translatex, translatey);
 							}
-							console.log('Move the node done');
+							console.log('Move rect node done');
 						} else {
-							selectedElement.setAttributeNS(null, 'x', mousePost.x - selectedElementOffset.x);
-							selectedElement.setAttributeNS(null, 'y', mousePost.y - selectedElementOffset.y);
+							selectedElement.setAttributeNS(null, 'x', mousePos.x - selectedElementOffset.x);
+							selectedElement.setAttributeNS(null, 'y', mousePos.y - selectedElementOffset.y);
 						}
 					}
 
 					if (shapeType == ShapeTypes.CIRCLE) {
-						selectedElement.setAttributeNS(null, 'cx', mousePost.x - selectedElementOffset.cx);
-						selectedElement.setAttributeNS(null, 'cy', mousePost.y - selectedElementOffset.cy);
+						if (node) {
+							console.log('Moving circle node...');
+							let translateMatrix = getTranslationMatrix(node);
+							if (translateMatrix) {
+								let translatex = mousePos.x - (selectedElementOffset.cx + parseFloat(selectedElement.getAttributeNS(null, 'cx')) + translateMatrix.e);
+								let translatey = mousePos.y - (selectedElementOffset.cy + parseFloat(selectedElement.getAttributeNS(null, 'cy')) + translateMatrix.f);
+								move(node, translatex, translatey);
+							} else {
+								translatex = mousePos.x - (selectedElementOffset.cx + parseFloat(selectedElement.getAttributeNS(null, 'cx')));
+								translatey = mousePos.y - (selectedElementOffset.cy + parseFloat(selectedElement.getAttributeNS(null, 'cy')));
+								move(node, translatex, translatey);
+							}
+							console.log('Move circle node done');
+						} else {
+							selectedElement.setAttributeNS(null, 'cx', mousePos.x - selectedElementOffset.cx);
+							selectedElement.setAttributeNS(null, 'cy', mousePos.y - selectedElementOffset.cy);
+						}
 					}
 
 					updateLines(selectedElement);
@@ -510,7 +555,7 @@
 
 		function createCircleNode() {
 			let g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-			let gid = 'g_' + Date.now();
+			let gid = 'node_' + Date.now();
 			g.setAttribute('id', gid);
 
 			let circle = drawCircleShape(null);
@@ -521,7 +566,7 @@
 			name.setAttributeNS(null, 'fill', 'black')
 			name.setAttributeNS(null, 'x', parseFloat(circle.getAttributeNS(null, 'cx')) - parseFloat(circle.getAttributeNS(null, 'r')));
 			name.setAttributeNS(null, 'y', circle.getAttributeNS(null, 'cy') + circle.getAttributeNS(null, 'r'));
-			name.textContent = 'gid: ' + gid;
+			name.textContent = gid;
 
 			g.append(circle);
 			g.append(name);
@@ -531,7 +576,7 @@
 
 		function createRectNode() {
 			let g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-			let gid = 'g_' + Date.now();
+			let gid = 'node_' + Date.now();
 			g.setAttribute('id', gid);
 
 			let rect = drawRectShape(null);
@@ -542,7 +587,7 @@
 			name.setAttributeNS(null, 'fill', 'black');
 			name.setAttributeNS(null, 'x', rect.getAttributeNS(null, 'x'));
 			name.setAttributeNS(null, 'y', parseFloat(rect.getAttributeNS(null, 'y')) + parseFloat(rect.getAttributeNS(null, 'height')) / 2);
-			name.textContent = 'gid: ' + gid;
+			name.textContent = gid;
 
 			g.append(rect);
 			g.append(name);

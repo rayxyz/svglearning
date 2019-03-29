@@ -460,7 +460,12 @@ function adjustShapePosition(shape) {
 		}
 
 		if (shapeType === ShapeTypes.CIRCLE) {
-
+			let cx = parseFloat(shape.getAttributeNS(null, 'cx'));
+			let cy = parseFloat(shape.getAttributeNS(null, 'cy'));
+			cx += translateMatrix.e;
+			cy += translateMatrix.f;
+			shape.setAttributeNS(null, 'cx', cx);    
+			shape.setAttributeNS(null, 'cy', cy);
 		}
 
 		if (shapeType === ShapeTypes.TEXT) {

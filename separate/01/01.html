@@ -24,7 +24,7 @@
 			text-align: center;
 		}
 
-		#left-panel .shape {
+		#left-panel .node {
 			/* background-color: azure; */
 			/* margin: 10px; */
 			width: 100%;
@@ -33,7 +33,7 @@
 			background-color: white;
 		}
 
-		#left-panel .shape img {
+		#left-panel .node img {
 			width: 95%;
 		}
 
@@ -65,16 +65,16 @@
 		<div class="panel-title">
 			<span>节点形状</span>
 		</div>
-		<div class="shape" shape-type="rect">
+		<div class="node" shape-type="rect">
 			<img src="./rect.png" />
 		</div>
-		<div class="shape" shape-type="circle">
+		<div class="node" shape-type="circle">
 			<img src="./circle.png" />
 		</div>
-		<div class="shape">
+		<div class="node">
 
 		</div>
-		<div class="shape">
+		<div class="node">
 
 		</div>
 	</div>
@@ -103,7 +103,7 @@
 		var SVGXMLNS = 'http://www.w3.org/2000/svg';
 		let defs = document.getElementById('defs');
 		let lines = [];
-	
+
 		// Initializing the svg container
 		function init(evt) {
 			let svg = evt.target;
@@ -144,8 +144,8 @@
 							// console.log('lines[i].source.getAttributeNS(null, id): ', lines[i].source.getAttributeNS(null, 'id'));
 							// console.log('lines[i].target.getAttributeNS(null, id): ', lines[i].target.getAttributeNS(null, 'id'));
 							// console.log('lines[i]: ', lines[i]);
-							if (eleIdList[j] == lines[i].source.getAttributeNS(null, 'id') || 
-							eleIdList[j] == lines[i].target.getAttributeNS(null, 'id')) {
+							if (eleIdList[j] == lines[i].source.getAttributeNS(null, 'id') ||
+								eleIdList[j] == lines[i].target.getAttributeNS(null, 'id')) {
 								lines[i].remove();
 							}
 						}
@@ -255,8 +255,14 @@
 					selectedElementOffset = getMousePosition(svg, evt);
 					shapeType = getShapeType(selectedElement);
 					if (shapeType === ShapeTypes.RECT) {
-						selectedElementOffset.x -= parseFloat(selectedElement.getAttributeNS(null, 'x'));
-						selectedElementOffset.y -= parseFloat(selectedElement.getAttributeNS(null, 'y'));
+						let translateMatrix = getTranslationMatrix(selectedElement.parentNode);
+						if (translateMatrix) {
+							selectedElementOffset.x -= (parseFloat(selectedElement.getAttributeNS(null, 'x')) + translateMatrix.e);
+							selectedElementOffset.y -= (parseFloat(selectedElement.getAttributeNS(null, 'y')) + translateMatrix.f);
+						} else {
+							selectedElementOffset.x -= parseFloat(selectedElement.getAttributeNS(null, 'x'));
+							selectedElementOffset.y -= parseFloat(selectedElement.getAttributeNS(null, 'y'));
+						}
 					}
 					if (shapeType === ShapeTypes.CIRCLE) {
 						selectedElementOffset.cx = selectedElementOffset.x;
@@ -299,15 +305,33 @@
 					console.log('Dragging...');
 					evt.preventDefault();
 
-					let coord = getMousePosition(svg, evt);
+					let mousePost = getMousePosition(svg, evt);
 					let shapeType = getShapeType(selectedElement);
+					let node = selectedElement.parentNode;
+
 					if (shapeType == ShapeTypes.RECT) {
-						selectedElement.setAttributeNS(null, 'x', coord.x - selectedElementOffset.x);
-						selectedElement.setAttributeNS(null, 'y', coord.y - selectedElementOffset.y);
+						if (node) {
+							console.log('Moving the node...');
+							let translateMatrix = getTranslationMatrix(node);
+							if (translateMatrix) {
+								let translatex = mousePost.x - (selectedElementOffset.x + parseFloat(selectedElement.getAttributeNS(null, 'x')) + translateMatrix.e);
+								let translatey = mousePost.y - (selectedElementOffset.y + parseFloat(selectedElement.getAttributeNS(null, 'y')) + translateMatrix.f);
+								move(node, translatex, translatey);
+							} else {
+								let translatex = mousePost.x - selectedElementOffset.x - parseFloat(selectedElement.getAttributeNS(null, 'x'));
+								let translatey = mousePost.y - selectedElementOffset.y - parseFloat(selectedElement.getAttributeNS(null, 'y'));
+								move(node, translatex, translatey);
+							}
+							console.log('Move the node done');
+						} else {
+							selectedElement.setAttributeNS(null, 'x', mousePost.x - selectedElementOffset.x);
+							selectedElement.setAttributeNS(null, 'y', mousePost.y - selectedElementOffset.y);
+						}
 					}
+
 					if (shapeType == ShapeTypes.CIRCLE) {
-						selectedElement.setAttributeNS(null, 'cx', coord.x - selectedElementOffset.cx);
-						selectedElement.setAttributeNS(null, 'cy', coord.y - selectedElementOffset.cy);
+						selectedElement.setAttributeNS(null, 'cx', mousePost.x - selectedElementOffset.cx);
+						selectedElement.setAttributeNS(null, 'cy', mousePost.y - selectedElementOffset.cy);
 					}
 
 					updateLines(selectedElement);
@@ -484,16 +508,58 @@
 			}
 		}
 
+		function createCircleNode() {
+			let g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+			let gid = 'g_' + Date.now();
+			g.setAttribute('id', gid);
+
+			let circle = drawCircleShape(null);
+
+			let name = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+			name.setAttributeNS(null, 'shape-type', 'text');
+			name.setAttributeNS(null, 'font-size', '0.4');
+			name.setAttributeNS(null, 'fill', 'black')
+			name.setAttributeNS(null, 'x', parseFloat(circle.getAttributeNS(null, 'cx')) - parseFloat(circle.getAttributeNS(null, 'r')));
+			name.setAttributeNS(null, 'y', circle.getAttributeNS(null, 'cy') + circle.getAttributeNS(null, 'r'));
+			name.textContent = 'gid: ' + gid;
+
+			g.append(circle);
+			g.append(name);
+
+			return g;
+		}
+
+		function createRectNode() {
+			let g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+			let gid = 'g_' + Date.now();
+			g.setAttribute('id', gid);
+
+			let rect = drawRectShape(null);
+
+			let name = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+			name.setAttributeNS(null, 'shape-type', 'text');
+			name.setAttributeNS(null, 'font-size', '0.4');
+			name.setAttributeNS(null, 'fill', 'black');
+			name.setAttributeNS(null, 'x', rect.getAttributeNS(null, 'x'));
+			name.setAttributeNS(null, 'y', parseFloat(rect.getAttributeNS(null, 'y')) + parseFloat(rect.getAttributeNS(null, 'height')) / 2);
+			name.textContent = 'gid: ' + gid;
+
+			g.append(rect);
+			g.append(name);
+
+			return g;
+		}
+
 		// drag & drop
 		let svg = document.querySelector('#svg-container');
-		Array.prototype.slice.call(document.querySelectorAll('.shape')).forEach((shape) => {
-			shape.addEventListener('click', (evt) => {
-				let shapeType = shape.getAttribute('shape-type');
+		Array.prototype.slice.call(document.querySelectorAll('.node')).forEach((node) => {
+			node.addEventListener('click', (evt) => {
+				let shapeType = node.getAttribute('shape-type');
 				if (shapeType === ShapeTypes.CIRCLE) {
-					svg.appendChild(drawCircleShape(evt));
+					svg.appendChild(createCircleNode());
 				}
 				if (shapeType === ShapeTypes.RECT) {
-					svg.appendChild(drawRectShape(evt));
+					svg.appendChild(createRectNode());
 				}
 			})
 		});

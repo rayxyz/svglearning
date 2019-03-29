@@ -1,6 +1,7 @@
 var ShapeTypes = {
 	RECT: 'rect',
 	CIRCLE: 'circle',
+	TEXT: 'text',
 	LINE: 'line'
 };
 
@@ -175,6 +176,14 @@ function calculateRectConnectingAnchorPoints(rect) {
 	let w = parseFloat(rect.getAttributeNS(null, 'width'));
 	let h = parseFloat(rect.getAttributeNS(null, 'height'));
 
+	if (rect.parentNode) {
+		let translateMatrix = getTranslationMatrix(rect.parentNode);
+		if (translateMatrix) {
+			x += translateMatrix.e;
+			y += translateMatrix.f;
+		}
+	}
+
 	return {
 		top: {
 			x: x + w / 2,
@@ -197,7 +206,6 @@ function calculateRectConnectingAnchorPoints(rect) {
 
 function createCircleConnectingAnchorPoints(svg, circle) {
 	let points = calculateCircleConnectingAnchorPoints(circle);
-	console.log('points: ', points);
 
 	svg.appendChild(drawConnectingAnchorPoints(points.north.x, points.north.y, '0.09', 'teal', 'north'));
 	svg.appendChild(drawConnectingAnchorPoints(points.east.x, points.east.y, '0.09', 'teal', 'east'));
@@ -209,6 +217,14 @@ function calculateCircleConnectingAnchorPoints(circle) {
 	let cx = parseFloat(circle.getAttributeNS(null, 'cx'));
 	let cy = parseFloat(circle.getAttributeNS(null, 'cy'));
 	let r = parseFloat(circle.getAttributeNS(null, 'r'));
+
+	if (circle.parentNode) {
+		let translateMatrix = getTranslationMatrix(circle.parentNode);
+		if (translateMatrix) {
+			cx += translateMatrix.e;
+			cy += translateMatrix.f;
+		}
+	}
 
 	return {
 		north: {
@@ -308,13 +324,16 @@ function addBBox(svg, shape) {
 	let bbox;
 	let shapeType = getShapeType(shape)
 
+	let x = parseFloat(shape.getAttributeNS(null, 'x'));
+	let y = parseFloat(shape.getAttributeNS(null, 'y'));
+
 	if (shapeType === ShapeTypes.RECT) {
 		bbox = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
 		bbox.setAttribute('id', 'bbox_' + Date.now());
 		bbox.setAttributeNS(null, 'class', BBoxStyle.class);
 		bbox.setAttributeNS(null, 'shape-type', BBoxStyle.shapeType);
-		bbox.setAttributeNS(null, 'x', parseFloat(shape.getAttributeNS(null, 'x')));
-		bbox.setAttributeNS(null, 'y', parseFloat(shape.getAttributeNS(null, 'y')));
+		bbox.setAttributeNS(null, 'x', x);
+		bbox.setAttributeNS(null, 'y', y);
 		bbox.setAttributeNS(null, 'width', parseFloat(shape.getAttributeNS(null, 'width')));
 		bbox.setAttributeNS(null, 'height', parseFloat(shape.getAttributeNS(null, 'height')));
 		bbox.setAttributeNS(null, 'fill', BBoxStyle.fill);
@@ -395,20 +414,73 @@ function addBBox(svg, shape) {
 
 function move(ele, x, y) {
 	if (!ele) return;
-	if (ele.transform.baseVal.numberOfItems == 0) {
+	if (!ele.transform || ele.transform.baseVal.numberOfItems == 0) {
+		console.log('moving is hard...%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%');
 		ele.setAttributeNS(null, 'transform', 'translate(' + x + ', ' + y + ')')
 	} else {
-		transform = ele.transform.baseVal.getItem(0);
+		console.log('ele.transform is null: ', ele.transform == null);
+		let transform = ele.transform.baseVal.getItem(0);
 		transform.setMatrix(transform.matrix.translate(x, y));
 	}
-	console.log('translation maxtrix: ', getTranslation(ele));
+	console.log('translation maxtrix: ', getTranslationMatrix(ele));
+
+	let children = ele.childNodes;
+	if (children) {
+		children.forEach((shape) => {
+			// console.log('adjusting shape: ' + shape.getAttributeNS(null, 'id'));
+			adjustShapePosition(shape);
+		})
+	}
 }
 
 function getTranslationMatrix(ele) {
 	if (!ele) return;
 	if (!ele.transform) return;
-	transform = ele.transform.baseVal.getItem(0);
+	if (ele.transform.baseVal.numberOfItems == 0) return;
+	let transform = ele.transform.baseVal.getItem(0);
 	return transform.matrix;
+}
+
+function adjustShapePosition(shape) {
+	let shapeType = getShapeType(shape)
+	let translateMatrix = null;
+
+	if (shape.parentNode) {
+		translateMatrix = getTranslationMatrix(shape.parentNode);
+	}
+
+	if (translateMatrix != null) {
+		if (shapeType === ShapeTypes.RECT) {
+			let x = parseFloat(shape.getAttributeNS(null, 'x'));
+			let y = parseFloat(shape.getAttributeNS(null, 'y'));
+			x += translateMatrix.e;
+			y += translateMatrix.f;
+			shape.setAttributeNS(null, 'x', x);
+			shape.setAttributeNS(null, 'y', y);
+		}
+
+		if (shapeType === ShapeTypes.CIRCLE) {
+
+		}
+
+		if (shapeType === ShapeTypes.TEXT) {
+			let x = parseFloat(shape.getAttributeNS(null, 'x'));
+			let y = parseFloat(shape.getAttributeNS(null, 'y'));
+			x += translateMatrix.e;
+			y += translateMatrix.f;
+			shape.setAttributeNS(null, 'x', x);
+			shape.setAttributeNS(null, 'y', y);
+		}
+
+		if (shapeType === ShapeTypes.LINE) {
+
+		}
+	}
+}
+
+function removeTransform(ele) {
+	if (!ele) return;
+	ele.removeAttribute('transform');
 }
 
 // export default function () {

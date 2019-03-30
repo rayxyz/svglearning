@@ -20,6 +20,21 @@ var RectShapeStyle = {
 	opacity: '0.95'
 };
 
+var CircleShapeStyle = {
+	class: 'draggable',
+	shapeType: 'circle',
+	cx: '2',
+	cy: '0.5',
+	radius: '1',
+	fill: 'url(#greenGradient)',
+	opacity: '0.95'
+};
+
+var DraggableStyle = {
+	class: 'draggable',
+	nearFieldRadius: 0.3
+}
+
 var BBoxStyle = {
 	class: 'bbox-rect',
 	shapeType: 'rect',
@@ -35,23 +50,28 @@ var BBoxStyle = {
 	opacity: '0.95'
 };
 
-var CircleShapeStyle = {
-	class: 'draggable',
-	shapeType: 'circle',
-	cx: '2',
-	cy: '0.5',
-	radius: '1',
-	fill: 'url(#greenGradient)',
-	opacity: '0.95'
-};
-
 var ConnectingLineShapeStyle = {
 	class: 'connecting-line',
 	shapeType: 'line',
 	stroke: 'grey',
-	strokeWidth: '0.03'
+	strokeWidth: '0.03',
+	mouseOverColor: 'green'
 };
 
+var ConnectingAnchorPointStyle = {
+	class: 'connecting-anchor-point',
+	shapeType: 'circle',
+	radius: '0.09',
+	fill: 'teal',
+	stroke: 'yellow',
+	strokeWidth: '0.1',
+	nearFieldRadius: 0.4
+}
+
+var ArrowMarkerStyle = {
+	markerStart: null,
+	markerEnd: 'url(#markerArrow)'
+}
 
 function getMousePosition(svg, evt) {
 	let CTM = svg.getScreenCTM();
@@ -165,10 +185,10 @@ function createConnectingAnchorPoints(svg, shape) {
 function createRectConnectingAnchorPoints(svg, rect) {
 	let points = calculateRectConnectingAnchorPoints(rect);
 
-	svg.appendChild(drawConnectingAnchorPoints(points.top.x, points.top.y, '0.09', 'teal', 'top'));
-	svg.appendChild(drawConnectingAnchorPoints(points.right.x, points.right.y, '0.09', 'teal', 'right'));
-	svg.appendChild(drawConnectingAnchorPoints(points.bottom.x, points.bottom.y, '0.09', 'teal', 'bottom'));
-	svg.appendChild(drawConnectingAnchorPoints(points.left.x, points.left.y, '0.09', 'teal', 'left'));
+	svg.appendChild(drawConnectingAnchorPoints(points.top.x, points.top.y, 'top'));
+	svg.appendChild(drawConnectingAnchorPoints(points.right.x, points.right.y, 'right'));
+	svg.appendChild(drawConnectingAnchorPoints(points.bottom.x, points.bottom.y, 'bottom'));
+	svg.appendChild(drawConnectingAnchorPoints(points.left.x, points.left.y, 'left'));
 }
 
 function calculateRectConnectingAnchorPoints(rect) {
@@ -208,10 +228,10 @@ function calculateRectConnectingAnchorPoints(rect) {
 function createCircleConnectingAnchorPoints(svg, circle) {
 	let points = calculateCircleConnectingAnchorPoints(circle);
 
-	svg.appendChild(drawConnectingAnchorPoints(points.north.x, points.north.y, '0.09', 'teal', 'north'));
-	svg.appendChild(drawConnectingAnchorPoints(points.east.x, points.east.y, '0.09', 'teal', 'east'));
-	svg.appendChild(drawConnectingAnchorPoints(points.south.x, points.south.y, '0.09', 'teal', 'south'));
-	svg.appendChild(drawConnectingAnchorPoints(points.west.x, points.west.y, '0.09', 'teal', 'west'));
+	svg.appendChild(drawConnectingAnchorPoints(points.north.x, points.north.y, 'north'));
+	svg.appendChild(drawConnectingAnchorPoints(points.east.x, points.east.y, 'east'));
+	svg.appendChild(drawConnectingAnchorPoints(points.south.x, points.south.y, 'south'));
+	svg.appendChild(drawConnectingAnchorPoints(points.west.x, points.west.y, 'west'));
 }
 
 function calculateCircleConnectingAnchorPoints(circle) {
@@ -247,14 +267,14 @@ function calculateCircleConnectingAnchorPoints(circle) {
 	}
 }
 
-function drawConnectingAnchorPoints(cx, cy, radius, color, posid) {
-	let shape = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-	shape.setAttributeNS(null, 'class', 'connecting-anchor-point');
-	shape.setAttributeNS(null, 'shape-type', 'circle');
-	shape.setAttributeNS(null, "cx", cx);
-	shape.setAttributeNS(null, "cy", cy);
-	shape.setAttributeNS(null, "r", radius);
-	shape.setAttributeNS(null, "fill", color);
+function drawConnectingAnchorPoints(cx, cy, posid) {
+	let shape = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+	shape.setAttributeNS(null, 'class', ConnectingAnchorPointStyle.class);
+	shape.setAttributeNS(null, 'shape-type', ConnectingAnchorPointStyle.shapeType);
+	shape.setAttributeNS(null, 'cx', cx);
+	shape.setAttributeNS(null, 'cy', cy);
+	shape.setAttributeNS(null, 'r', ConnectingAnchorPointStyle.radius);
+	shape.setAttributeNS(null, 'fill', ConnectingAnchorPointStyle.fill);
 	shape.setAttributeNS(null, 'posid', posid)
 
 	return shape;
@@ -301,7 +321,6 @@ function drawRectShape(evt) {
 }
 
 function createConnectingLine(startPoint, endPoint, sourceObj, attrativePoint) {
-	console.log('creating line...')
 	line = document.createElementNS("http://www.w3.org/2000/svg",
 		"line");
 	line.setAttribute('id', 'line_' + Date.now());
@@ -315,8 +334,6 @@ function createConnectingLine(startPoint, endPoint, sourceObj, attrativePoint) {
 	line.setAttributeNS(null, 'stroke', ConnectingLineShapeStyle.stroke);
 	line.connectedStartPointRaw = attrativePoint;
 	line.source = sourceObj;
-
-	console.log('creating line done')
 
 	return line;
 }
@@ -394,7 +411,6 @@ function addBBox(svg, shape) {
 		if (x1 > x2 && y1 < y2) {
 			degreeToRotate = 180 - calcDegreesFromSides(opposite, hypotenuse);
 		}
-		console.log('degrees need to rotate: ', degreeToRotate);
 
 		bbox = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
 		bbox.setAttribute('id', 'bbox_' + Date.now());
@@ -422,12 +438,10 @@ function removeBboxes() {
 function removeBboxedElements(bboxedElements) {
 	if (!bboxedElements || !bboxedElements.length) return;
 	if (bboxedElements.length > 0) {
+		console.log('Hello world!');
 		Array.prototype.slice.call(bboxedElements).forEach((ele) => {
-			if (ele.parentNode) {
-				let shapeType = ele.parentNode.getAttributeNS(null, 'shape-type');
-				if (shapeType === ShapeTypes.GROUP) {
-					ele.parentNode.remove();
-				}
+			if (ele.parentNode && getShapeType(ele.parentNode) === ShapeTypes.GROUP) {
+				ele.parentNode.remove();
 			} else {
 				ele.remove();
 			}
@@ -665,9 +679,6 @@ function makeDraggable(evt) {
 			}
 			for (let i = 0; i < lines.length; i++) {
 				for (let j = 0; j < eleIdList.length; j++) {
-					// console.log('lines[i].source.getAttributeNS(null, id): ', lines[i].source.getAttributeNS(null, 'id'));
-					// console.log('lines[i].target.getAttributeNS(null, id): ', lines[i].target.getAttributeNS(null, 'id'));
-					// console.log('lines[i]: ', lines[i]);
 					if (eleIdList[j] == lines[i].source.getAttributeNS(null, 'id') ||
 						eleIdList[j] == lines[i].target.getAttributeNS(null, 'id')) {
 						lines[i].remove();
@@ -682,10 +693,10 @@ function makeDraggable(evt) {
 		isNearAnyDraggableShape = false;
 
 		Array.prototype.slice.call(
-			document.querySelectorAll('.draggable')).forEach((shape) => {
+			document.querySelectorAll('.' + DraggableStyle.class)).forEach((shape) => {
 				event.preventDefault()
 				
-				if (isNear(svg, shape, 0.3, evt)) {
+				if (isNear(svg, shape, DraggableStyle.nearFieldRadius, evt)) {
 					isNearAnyDraggableShape = true;
 					if (!connectingAnchorPointsCreated) {
 						createConnectingAnchorPoints(svg, shape);
@@ -707,15 +718,13 @@ function makeDraggable(evt) {
 		}
 
 		Array.prototype.slice.call(
-			document.querySelectorAll('.connecting-anchor-point')).forEach((point) => {
+			document.querySelectorAll('.' + ConnectingAnchorPointStyle.class)).forEach((point) => {
 				point.addEventListener('mouseover', (evt) => {
-					console.log('Mouse overs me');
 					lineDrawable = true;
 				});
 				point.addEventListener('mouseout', (evt) => {
-					console.log('Mouse outs me....');
-					point.setAttributeNS(null, 'fill', 'teal');
-					point.setAttributeNS(null, 'r', '0.09');
+					point.setAttributeNS(null, 'r', ConnectingAnchorPointStyle.radius);
+					point.setAttributeNS(null, 'fill', ConnectingAnchorPointStyle.fill);
 					point.setAttributeNS(null, 'stroke', null);
 					point.setAttributeNS(null, 'stroke-width', 0);
 					if (!mouseDown) {
@@ -724,9 +733,9 @@ function makeDraggable(evt) {
 				});
 
 				if (lineDrawable) {
-					if (isNear(svg, point, 0.4, evt)) {
-						point.setAttributeNS(null, 'stroke', 'yellow');
-						point.setAttributeNS(null, 'stroke-width', '0.1');
+					if (isNear(svg, point, ConnectingAnchorPointStyle.nearFieldRadius, evt)) {
+						point.setAttributeNS(null, 'stroke', ConnectingAnchorPointStyle.stroke);
+						point.setAttributeNS(null, 'stroke-width', ConnectingAnchorPointStyle.strokeWidth);
 						isNearAttractivePoint = true;
 						attrativePoint = point;
 					} else {
@@ -737,18 +746,15 @@ function makeDraggable(evt) {
 			});
 
 		Array.prototype.slice.call(
-			document.querySelectorAll('.connecting-line')).forEach((line) => {
+			document.querySelectorAll('.' + ConnectingLineShapeStyle.class)).forEach((line) => {
 				if (line && !line.listenerAdded) {
 					line.addEventListener('mouseover', (evt) => {
-						console.log('mouse overs connecting line');
-						line.setAttributeNS(null, 'stroke', 'green');
+						line.setAttributeNS(null, 'stroke', ConnectingLineShapeStyle.mouseOverColor);
 					});
 					line.addEventListener('mouseout', (evt) => {
-						console.log('mouse outs connecting line');
 						line.setAttributeNS(null, 'stroke', ConnectingLineShapeStyle.stroke);
 					});
 					line.addEventListener('click', (evt) => {
-						console.log('connecting line cliked');
 						addBBox(svg, line);
 						bboxedElements.push(line);
 					});
@@ -757,10 +763,9 @@ function makeDraggable(evt) {
 			});
 
 		Array.prototype.slice.call(
-			document.querySelectorAll('.draggable')).forEach((shape) => {
+			document.querySelectorAll('.' + DraggableStyle.class)).forEach((shape) => {
 				if (shape && !shape.listenerAdded) {
 					shape.addEventListener('click', (evt) => {
-						console.log('rect cliked');
 						addBBox(svg, shape);
 						bboxedElements.push(shape);
 					});
@@ -778,8 +783,7 @@ function makeDraggable(evt) {
 			removeConnectingAnchorPoints();
 		}
 
-		if (evt.target.classList.contains('draggable')) {
-			console.log('Starting drag...');
+		if (evt.target.classList.contains('' + DraggableStyle.class)) {
 			selectedElement = evt.target;
 			selectedElementOffset = getMousePosition(svg, evt);
 			shapeType = getShapeType(selectedElement);
@@ -815,8 +819,8 @@ function makeDraggable(evt) {
 		if (mouseDown && lineDrawable) {
 			if (!markerArrowCreated && lineCreated) {
 				///////////// Magic happens here.
-				line.setAttributeNS(null, "marker-start", null);
-				line.setAttributeNS(null, "marker-end", "url(#markerArrow)");
+				line.setAttributeNS(null, 'marker-start', ArrowMarkerStyle.markerStart);
+				line.setAttributeNS(null, 'marker-end', ArrowMarkerStyle.markerEnd);
 				markerArrowCreated = true;
 				//////////////
 			}
@@ -839,7 +843,6 @@ function makeDraggable(evt) {
 		}
 
 		if (selectedElement) {
-			console.log('Dragging...');
 			evt.preventDefault();
 
 			let mousePos = getMousePosition(svg, evt);
@@ -849,7 +852,6 @@ function makeDraggable(evt) {
 
 			if (shapeType == ShapeTypes.RECT) {
 				if (node) {
-					console.log('Moving rect node...');
 					let translateMatrix = getTranslationMatrix(node);
 					if (translateMatrix) {
 						translatex = mousePos.x - (selectedElementOffset.x + parseFloat(selectedElement.getAttributeNS(null, 'x')) + translateMatrix.e);
@@ -860,7 +862,6 @@ function makeDraggable(evt) {
 						translatey = mousePos.y - (selectedElementOffset.y + parseFloat(selectedElement.getAttributeNS(null, 'y')));
 						move(node, translatex, translatey);
 					}
-					console.log('Move rect node done');
 				} else {
 					selectedElement.setAttributeNS(null, 'x', mousePos.x - selectedElementOffset.x);
 					selectedElement.setAttributeNS(null, 'y', mousePos.y - selectedElementOffset.y);
@@ -869,7 +870,6 @@ function makeDraggable(evt) {
 
 			if (shapeType == ShapeTypes.CIRCLE) {
 				if (node) {
-					console.log('Moving circle node...');
 					let translateMatrix = getTranslationMatrix(node);
 					if (translateMatrix) {
 						let translatex = mousePos.x - (selectedElementOffset.cx + parseFloat(selectedElement.getAttributeNS(null, 'cx')) + translateMatrix.e);
@@ -880,7 +880,6 @@ function makeDraggable(evt) {
 						translatey = mousePos.y - (selectedElementOffset.cy + parseFloat(selectedElement.getAttributeNS(null, 'cy')));
 						move(node, translatex, translatey);
 					}
-					console.log('Move circle node done');
 				} else {
 					selectedElement.setAttributeNS(null, 'cx', mousePos.x - selectedElementOffset.cx);
 					selectedElement.setAttributeNS(null, 'cy', mousePos.y - selectedElementOffset.cy);

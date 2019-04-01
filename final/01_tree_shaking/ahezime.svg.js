@@ -228,10 +228,16 @@ function calculateRectConnectingAnchorPoints(rect) {
 function createCircleConnectingAnchorPoints(svg, circle) {
 	let points = calculateCircleConnectingAnchorPoints(circle);
 
+	console.log('r: ', circle.getAttributeNS(null, 'r'), 'points =>  ', points);
+
 	svg.appendChild(drawConnectingAnchorPoints(points.north.x, points.north.y, 'north'));
+	svg.appendChild(drawConnectingAnchorPoints(points.northeast.x, points.northeast.y, 'northeast'));
 	svg.appendChild(drawConnectingAnchorPoints(points.east.x, points.east.y, 'east'));
+	svg.appendChild(drawConnectingAnchorPoints(points.southeast.x, points.southeast.y, 'southeast'));
 	svg.appendChild(drawConnectingAnchorPoints(points.south.x, points.south.y, 'south'));
+	svg.appendChild(drawConnectingAnchorPoints(points.southwest.x, points.southwest.y, 'southwest'));
 	svg.appendChild(drawConnectingAnchorPoints(points.west.x, points.west.y, 'west'));
+	svg.appendChild(drawConnectingAnchorPoints(points.northwest.x, points.northwest.y, 'northwest'));
 }
 
 function calculateCircleConnectingAnchorPoints(circle) {
@@ -247,22 +253,55 @@ function calculateCircleConnectingAnchorPoints(circle) {
 		}
 	}
 
+	// How to calculate the northeast anchor point:
+	// 
+	// Math.sin(x)
+	// Math.sin(x) returns the sine(a value between - 1 and 1) of the angle x(given in radians).
+	// If you want to use degrees instead of radians, you have to convert degrees to radians:
+	// Angle in radians = Angle in degrees x PI / 180. The same as the Math.cos(x).
+	// 
+	// Cut the circle to 8 pieces, they are: 
+	// the north, the northeast, the east, the southeast, the south, the southwest, the west, and the northwest.
+	// Noticing that the arch degree of the north and the northeast is 45 degrees, so as the others.
+	// As we know, Sin(45) = root(2)/2 = d / r, d is the distance when draw a straight arch line 
+	// from the NE anchor point on the line of circle center to the north anchor point, 
+	// so d = r * cos(45) = (root(2)/2) * r.
+	// The coordinat of northeast anchor point NE = (NEx, NEy) = (Nx + r * cos(45), Ny - (r - r * cos(45))).
+	// So NE = (Nx + cos(45) * r, Ny - r * (1 - cos(45))).
+	// In JavaScript: NE = (cx + Math.cos(45 * Math.PI / 180) * r, (cy - r) + r * (1 - Math.cos(45 * Math.PI / 180)))
+
 	return {
 		north: {
 			x: cx,
 			y: cy - r
 		},
+		northeast: {
+			x: cx + Math.cos(45 * Math.PI / 180) * r,
+			y: (cy - r) + r * (1 - Math.cos(45 * Math.PI / 180)),
+		},
 		east: {
 			x: cx + r,
 			y: cy
+		},
+		southeast: {
+			x: (cx + r) - r * (1 - Math.cos(45 * Math.PI / 180)),
+			y: cy + Math.cos(45 * Math.PI / 180) * r
 		},
 		south: {
 			x: cx,
 			y: cy + r
 		},
+		southwest: {
+			x: cx - Math.cos(45 * Math.PI / 180) * r,
+			y: (cy + r) - r * (1 - Math.cos(45 * Math.PI / 180))
+		},
 		west: {
 			x: cx - r,
 			y: cy
+		},
+		northwest: {
+			x: (cx - r) + r * (1 - Math.cos(45 * Math.PI / 180)),
+			y: cy - Math.cos(45 * Math.PI / 180) * r
 		}
 	}
 }
@@ -498,7 +537,7 @@ function adjustShapePosition(shape) {
 			let cy = parseFloat(shape.getAttributeNS(null, 'cy'));
 			cx += translateMatrix.e;
 			cy += translateMatrix.f;
-			shape.setAttributeNS(null, 'cx', cx);    
+			shape.setAttributeNS(null, 'cx', cx);
 			shape.setAttributeNS(null, 'cy', cy);
 		}
 
@@ -591,17 +630,33 @@ function updateLines(shape, lines) {
 						x1 = anchorPointsSource.north.x;
 						y1 = anchorPointsSource.north.y;
 						break;
+					case 'northeast':
+						x1 = anchorPointsSource.northeast.x;
+						y1 = anchorPointsSource.northeast.y;
+						break;
 					case 'east':
 						x1 = anchorPointsSource.east.x;
 						y1 = anchorPointsSource.east.y;
+						break;
+					case 'southeast':
+						x1 = anchorPointsSource.southeast.x;
+						y1 = anchorPointsSource.southeast.y;
 						break;
 					case 'south':
 						x1 = anchorPointsSource.south.x;
 						y1 = anchorPointsSource.south.y;
 						break;
+					case 'southwest':
+						x1 = anchorPointsSource.southwest.x;
+						y1 = anchorPointsSource.southwest.y;
+						break;
 					case 'west':
 						x1 = anchorPointsSource.west.x;
 						y1 = anchorPointsSource.west.y;
+						break;
+					case 'northwest':
+						x1 = anchorPointsSource.northwest.x;
+						y1 = anchorPointsSource.northwest.y;
 						break;
 					default:
 						break;
@@ -612,6 +667,10 @@ function updateLines(shape, lines) {
 						x2 = anchorPointsTarget.north.x;
 						y2 = anchorPointsTarget.north.y;
 						break;
+					case 'northeast':
+						x2 = anchorPointsTarget.northeast.x;
+						y2 = anchorPointsTarget.northeast.y;
+						break;
 					case 'east':
 						x2 = anchorPointsTarget.east.x;
 						y2 = anchorPointsTarget.east.y;
@@ -620,9 +679,16 @@ function updateLines(shape, lines) {
 						x2 = anchorPointsTarget.south.x;
 						y2 = anchorPointsTarget.south.y;
 						break;
+					case 'southeast':
+						x2 = anchorPointsTarget.southeast.x;
+						y2 = anchorPointsTarget.southeast.y;
 					case 'west':
 						x2 = anchorPointsTarget.west.x;
 						y2 = anchorPointsTarget.west.y;
+						break;
+					case 'northwest':
+						x2 = anchorPointsTarget.northwest.x;
+						y2 = anchorPointsTarget.northwest.y;
 						break;
 					default:
 						break;
@@ -695,7 +761,7 @@ function makeDraggable(evt) {
 		Array.prototype.slice.call(
 			document.querySelectorAll('.' + DraggableStyle.class)).forEach((shape) => {
 				event.preventDefault()
-				
+
 				if (isNear(svg, shape, DraggableStyle.nearFieldRadius, evt)) {
 					isNearAnyDraggableShape = true;
 					if (!connectingAnchorPointsCreated) {

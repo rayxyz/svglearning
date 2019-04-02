@@ -299,6 +299,8 @@ function calculateCircleConnectingAnchorPoints(circle) {
 		}
 	}
 
+	console.log('%%%%%%%%%%%% cx: ', cx, ', cy: ', cy, ', r: ', r);
+
 	// How to calculate the northeast anchor point:
 	// 
 	// Math.sin(x)
@@ -405,7 +407,7 @@ function drawRectShape(customStyle) {
 	return shape;
 }
 
-function createConnectingLine(startPoint, endPoint, sourceObj, attrativePoint, customStyle) {
+function createConnectingLine(startPoint, endPoint, source, target, customStyle) {
 	line = document.createElementNS('http://www.w3.org/2000/svg',
 		'line');
 	line.setAttribute('id', 'line_' + genUniqueID());
@@ -417,8 +419,11 @@ function createConnectingLine(startPoint, endPoint, sourceObj, attrativePoint, c
 	line.setAttributeNS(null, 'y2', endPoint.y);
 	line.setAttributeNS(null, 'stroke-width', customStyle && customStyle.strokeWidth ? customStyle.strokeWidth : ConnectingLineShapeStyle.strokeWidth);
 	line.setAttributeNS(null, 'stroke', customStyle && customStyle.stroke ? customStyle.stroke : ConnectingLineShapeStyle.stroke);
-	line.connectedStartPointRaw = attrativePoint;
-	line.source = sourceObj;
+	// line.connectedStartPointRaw = attrativePoint;
+	line.startPoint = startPoint;
+	line.endPoint = endPoint;
+	line.source = source;
+	line.target = target;
 
 	return line;
 }
@@ -605,149 +610,144 @@ function removeTransform(ele) {
 	ele.removeAttribute('transform');
 }
 
+function getRectConnectingAnchorPoint(connectingAnchorPoints, posid) {
+	let x, y;
+
+	switch (posid) {
+		case 'top':
+			x = connectingAnchorPoints.top.x;
+			y = connectingAnchorPoints.top.y;
+			break;
+		case 'right':
+			x = connectingAnchorPoints.right.x;
+			y = connectingAnchorPoints.right.y;
+			break;
+		case 'bottom':
+			x = connectingAnchorPoints.bottom.x;
+			y = connectingAnchorPoints.bottom.y;
+			break;
+		case 'left':
+			x = connectingAnchorPoints.left.x;
+			y = connectingAnchorPoints.left.y;
+			break;
+		default:
+			break;
+	}
+
+	return {x: x, y: y};
+}
+
+function getCircleConnectingAnchorPoint(connectingAnchorPoints, posid) {
+	let x, y;
+
+	switch (posid) {
+		case 'north':
+			x = connectingAnchorPoints.north.x;
+			y = connectingAnchorPoints.north.y;
+			break;
+		case 'northeast':
+			x = connectingAnchorPoints.northeast.x;
+			y = connectingAnchorPoints.northeast.y;
+			break;
+		case 'east':
+			x = connectingAnchorPoints.east.x;
+			y = connectingAnchorPoints.east.y;
+			break;
+		case 'southeast':
+			x = connectingAnchorPoints.southeast.x;
+			y = connectingAnchorPoints.southeast.y;
+			break;
+		case 'south':
+			x = connectingAnchorPoints.south.x;
+			y = connectingAnchorPoints.south.y;
+			break;
+		case 'southwest':
+			x = connectingAnchorPoints.southwest.x;
+			y = connectingAnchorPoints.southwest.y;
+			break;
+		case 'west':
+			x = connectingAnchorPoints.west.x;
+			y = connectingAnchorPoints.west.y;
+			break;
+		case 'northwest':
+			x = connectingAnchorPoints.northwest.x;
+			y = connectingAnchorPoints.northwest.y;
+			break;
+		default:
+			break;
+	}
+
+	return {x: x, y: y};
+}
+
+function getConnectingAnchorPoint(shapeType, connectingAnchorPoints, posid) {
+	if (shapeType === ShapeTypes.RECT) {
+		return getRectConnectingAnchorPoint(connectingAnchorPoints, posid);
+	} 
+	
+	if(shapeType === ShapeTypes.CIRCLE) {
+		return getCircleConnectingAnchorPoint(connectingAnchorPoints, posid);
+	}
+	
+	return null
+}
+
 function updateLines(shape, lines) {
-	let shapeType = getShapeType(shape);
-
+	// TODO 
+	// Only update the lines related to shape
+	//
+	
 	for (let i = 0; i < lines.length; i++) {
-		if (lines[i].connectedStartPointRaw && lines[i].connectedEndPointRaw) {
-			let connectedStartPoint = lines[i].connectedStartPointRaw;
-			let connectedEndPoint = lines[i].connectedEndPointRaw;
+		if (!lines[i].startPoint || !lines[i].endPoint) {
+			console.log('Invalid line start point or end point');
+			continue;
+		};
 
-			let x1 = parseFloat(lines[i].getAttributeNS(null, 'x1'));
-			let y1 = parseFloat(lines[i].getAttributeNS(null, 'y1'));
-			let x2 = parseFloat(lines[i].getAttributeNS(null, 'x2'));
-			let y2 = parseFloat(lines[i].getAttributeNS(null, 'y2'));
+		let x1 = parseFloat(lines[i].getAttributeNS(null, 'x1'));
+		let y1 = parseFloat(lines[i].getAttributeNS(null, 'y1'));
+		let x2 = parseFloat(lines[i].getAttributeNS(null, 'x2'));
+		let y2 = parseFloat(lines[i].getAttributeNS(null, 'y2'));
 
-			if (shapeType === ShapeTypes.RECT) {
-				let anchorPointsSource = calculateRectConnectingAnchorPoints(lines[i].source)
-				let anchorPointsTarget = calculateRectConnectingAnchorPoints(lines[i].target); // target object
-
-				switch (connectedStartPoint.getAttributeNS(null, 'posid')) {
-					case 'top':
-						x1 = anchorPointsSource.top.x;
-						y1 = anchorPointsSource.top.y;
-						break;
-					case 'right':
-						x1 = anchorPointsSource.right.x;
-						y1 = anchorPointsSource.right.y;
-						break;
-					case 'bottom':
-						x1 = anchorPointsSource.bottom.x;
-						y1 = anchorPointsSource.bottom.y;
-						break;
-					case 'left':
-						x1 = anchorPointsSource.left.x;
-						y1 = anchorPointsSource.left.y;
-						break;
-					default:
-						break;
-				}
-
-				switch (connectedEndPoint.getAttributeNS(null, 'posid')) {
-					case 'top':
-						x2 = anchorPointsTarget.top.x;
-						y2 = anchorPointsTarget.top.y;
-						break;
-					case 'right':
-						x2 = anchorPointsTarget.right.x;
-						y2 = anchorPointsTarget.right.y;
-						break;
-					case 'bottom':
-						x2 = anchorPointsTarget.bottom.x;
-						y2 = anchorPointsTarget.bottom.y;
-						break;
-					case 'left':
-						x2 = anchorPointsTarget.left.x;
-						y2 = anchorPointsTarget.left.y;
-						break;
-					default:
-						break;
-				}
+		sourceShapeType = getShapeType(lines[i].source);
+		if (sourceShapeType === ShapeTypes.RECT) {
+			let anchorPointsSource = calculateRectConnectingAnchorPoints(lines[i].source)
+			let point = getConnectingAnchorPoint(ShapeTypes.RECT, anchorPointsSource, lines[i].startPoint.posid);
+			if (point) {
+				x1 = point.x;
+				y1 = point.y
 			}
-
-			if (shapeType == ShapeTypes.CIRCLE) {
-				let anchorPointsSource = calculateCircleConnectingAnchorPoints(lines[i].source)
-				let anchorPointsTarget = calculateCircleConnectingAnchorPoints(lines[i].target); // target object
-
-				switch (connectedStartPoint.getAttributeNS(null, 'posid')) {
-					case 'north':
-						x1 = anchorPointsSource.north.x;
-						y1 = anchorPointsSource.north.y;
-						break;
-					case 'northeast':
-						x1 = anchorPointsSource.northeast.x;
-						y1 = anchorPointsSource.northeast.y;
-						break;
-					case 'east':
-						x1 = anchorPointsSource.east.x;
-						y1 = anchorPointsSource.east.y;
-						break;
-					case 'southeast':
-						x1 = anchorPointsSource.southeast.x;
-						y1 = anchorPointsSource.southeast.y;
-						break;
-					case 'south':
-						x1 = anchorPointsSource.south.x;
-						y1 = anchorPointsSource.south.y;
-						break;
-					case 'southwest':
-						x1 = anchorPointsSource.southwest.x;
-						y1 = anchorPointsSource.southwest.y;
-						break;
-					case 'west':
-						x1 = anchorPointsSource.west.x;
-						y1 = anchorPointsSource.west.y;
-						break;
-					case 'northwest':
-						x1 = anchorPointsSource.northwest.x;
-						y1 = anchorPointsSource.northwest.y;
-						break;
-					default:
-						break;
-				}
-
-				switch (connectedEndPoint.getAttributeNS(null, 'posid')) {
-					case 'north':
-						x2 = anchorPointsTarget.north.x;
-						y2 = anchorPointsTarget.north.y;
-						break;
-					case 'northeast':
-						x2 = anchorPointsTarget.northeast.x;
-						y2 = anchorPointsTarget.northeast.y;
-						break;
-					case 'east':
-						x2 = anchorPointsTarget.east.x;
-						y2 = anchorPointsTarget.east.y;
-						break;
-					case 'southeast':
-						x2 = anchorPointsTarget.southeast.x;
-						y2 = anchorPointsTarget.southeast.y;
-					case 'south':
-						x2 = anchorPointsTarget.south.x;
-						y2 = anchorPointsTarget.south.y;
-						break;
-					case 'southwest':
-						x2 = anchorPointsTarget.southwest.x;
-						y2 = anchorPointsTarget.southwest.y;
-						break;
-					case 'west':
-						x2 = anchorPointsTarget.west.x;
-						y2 = anchorPointsTarget.west.y;
-						break;
-					case 'northwest':
-						x2 = anchorPointsTarget.northwest.x;
-						y2 = anchorPointsTarget.northwest.y;
-						break;
-					default:
-						break;
-				}
-			}
-
-			lines[i].setAttributeNS(null, 'x1', x1);
-			lines[i].setAttributeNS(null, 'y1', y1);
-			lines[i].setAttributeNS(null, 'x2', x2);
-			lines[i].setAttributeNS(null, 'y2', y2);
 		}
+		if (sourceShapeType === ShapeTypes.CIRCLE) {
+			let anchorPointsSource = calculateCircleConnectingAnchorPoints(lines[i].source)
+			let point = getConnectingAnchorPoint(ShapeTypes.CIRCLE, anchorPointsSource, lines[i].startPoint.posid);
+			if (point) {
+				x1 = point.x;
+				y1 = point.y;
+			}
+		}
+
+		targetShapeType = getShapeType(lines[i].target);
+		if (targetShapeType === ShapeTypes.RECT) {
+			let anchorPointsTarget = calculateRectConnectingAnchorPoints(lines[i].target); // target object
+			point = getConnectingAnchorPoint(ShapeTypes.RECT, anchorPointsTarget, lines[i].endPoint.posid);
+			if (point) {
+				x2 = point.x;
+				y2 = point.y;
+			}
+		}
+		if (targetShapeType === ShapeTypes.CIRCLE) {
+			let anchorPointsTarget = calculateCircleConnectingAnchorPoints(lines[i].target); // target object
+			point = getConnectingAnchorPoint(ShapeTypes.CIRCLE, anchorPointsTarget, lines[i].endPoint.posid);
+			if (point) {
+				x2 = point.x;
+				y2 = point.y;
+			}
+		}
+
+		lines[i].setAttributeNS(null, 'x1', x1);
+		lines[i].setAttributeNS(null, 'y1', y1);
+		lines[i].setAttributeNS(null, 'x2', x2);
+		lines[i].setAttributeNS(null, 'y2', y2);
 	}
 }
 
@@ -756,8 +756,8 @@ function updateLines(shape, lines) {
 
 // };
 
-function makeDraggable(evt) {
-	let svg = evt.target;
+function makeDraggable(svg, args) {
+	// let svg = evt.target;
 
 	let lines = [];
 
@@ -788,6 +788,14 @@ function makeDraggable(evt) {
 	svg.addEventListener('mousedown', startDrag);
 	svg.addEventListener('mousemove', drag);
 	svg.addEventListener('mouseup', endDrag);
+
+	// Init designer
+	if (args) {
+		if (args.lines && args.lines.length && args.lings.length > 0) {
+			console.log('I got the lines from dynamic generating...');
+			lines = args.lines;
+		}
+	}
 
 	document.addEventListener('keydown', (evt) => {
 		if (evt.key == 'Delete') {
@@ -947,10 +955,12 @@ function makeDraggable(evt) {
 			if (startPoint && endPoint && !(startPoint.x == endPoint.x && startPoint.y == endPoint.y)) {
 				// console.log('lineCreated: ', lineCreated, ', isNearAttractivePoint: ', isNearAttractivePoint, ', attrativePoint: ', attrativePoint);
 				if (!lineCreated && isNearAttractivePoint && attrativePoint) {
-					lineTargetObj = null;
 					startPoint.x = parseFloat(attrativePoint.getAttributeNS(null, 'cx'));
 					startPoint.y = parseFloat(attrativePoint.getAttributeNS(null, 'cy'));
-					line = createConnectingLine(startPoint, endPoint, lineSourceObj, attrativePoint);
+					startPoint.posid = attrativePoint.getAttributeNS(null, 'posid');
+					lineTargetObj = null;
+					endPoint.posid = null;
+					line = createConnectingLine(startPoint, endPoint, lineSourceObj, lineTargetObj);
 					svg.appendChild(line);
 					lineCreated = true;
 				}
@@ -1017,13 +1027,17 @@ function makeDraggable(evt) {
 				if (lineSourceObj && lineTargetObj && lineSourceObj.getAttributeNS(null, 'id') == lineTargetObj.getAttributeNS(null, 'id')) {
 					removeLine(line);
 				} else {
+					console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
 					endPoint.x = parseFloat(attrativePoint.getAttributeNS(null, 'cx'));
 					endPoint.y = parseFloat(attrativePoint.getAttributeNS(null, 'cy'));
+					endPoint.posid = attrativePoint.getAttributeNS(null, 'posid');
 					line.setAttributeNS(null, 'x2', endPoint.x);
 					line.setAttributeNS(null, 'y2', endPoint.y);
-					line.connectedEndPointRaw = attrativePoint;
+					line.endPoint = endPoint;
+					// line.connectedEndPointRaw = attrativePoint;
 					line.target = lineTargetObj;
 					lines.push(line);
+					console.log('lines: ', lines);
 				}
 			} else {
 				removeLine(line);

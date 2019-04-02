@@ -22,7 +22,7 @@ function createCircleNode(nodeData) {
 
 function createRectNode(nodeModel) {
 	let g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-	let gid = 'node_' + genUniqueID();
+	let gid = nodeModel.id ? nodeModel.id : 'node_' + genUniqueID();
 	g.setAttribute('id', gid);
 	g.setAttribute('shape-type', 'group');
 
@@ -53,34 +53,56 @@ function createRectNode(nodeModel) {
 	return g;
 }
 
-function connectNodes(nodes, connections) {
-	if (!nodes || !connections || !connections.length) return;
+function connectNodes(nodeEles, connections) {
+	if (!nodeEles || !nodeEles.length || !connections || !connections.length) return;
+	let lines = [];
 	for (let i = 0; i < connections.length; i++) {
 		let conn = connections[i];
 		let source = null;
 		let target = null;
-		for (let j = 0; j < nodes.length; j++) {
-			if (nodes[j].id == conn.source.nodeId) {
-				source = nodes[j];
+		for (let j = 0; j < nodeEles.length; j++) {
+			let nodeId = nodeEles[j].getAttributeNS(null, 'id');
+			if (nodeId == conn.source.nodeId) {
+				source = nodeEles[j];
 			}
-			if (nodes[j].id == conn.target.nodeId) {
-				target = nodes[j];
+			if (nodeId.id == conn.target.nodeId) {
+				target = nodeEles[j];
 			}
 			if (source && target) break;
 		}
 		if (source && target && conn) {
-			connect(source, target, conn);
+			lines.push(connect(source, target, conn));
 		}
 	}
 	console.log('connect nodes done');
+
+	return lines;
 }
 
 function connect(sourceNode, targetNode, connection) {
 	if (!sourceNode || !targetNode || !connection) return;
 	console.log('connect nodes, source: ', sourceNode.id, ', target: ', targetNode.id);
+	
+	let startPoint;
+	let endPoint;
+
+	let sourceConnectingAnchorPoints = calculateRectConnectingAnchorPoints(sourceNode);
+	let targetConnectingAnchorPoints = calculateRectConnectingAnchorPoints(targetNode);
+
+	startPoint.posid = connection.source.posid;
+	connectiongPoint = getConnectingAnchorPoint(sourceNode, sourceConnectingAnchorPoints, startPoint.posid);
+	startPoint.x = connectingPoint.x ? connectingPoint.x : sourceConnectingAnchorPoints.left.x;
+	startPoint.y = connectingPoint.y ? connectingPoint.y : sourceConnectingAnchorPoints.left.y;
+	
+	endPoint.posid = connection.target.posid;
+	connectiongPoint = getConnectingAnchorPoint(sourceNode, targetConnectingAnchorPoints, endPoint.posid);
+	endPoint.x = connectingPoint.x ? connectingPoint.x : targetConnectingAnchorPoints.left.x;
+	endPoint.y = connectingPoint.y ? connectingPoint.y : targetConnectingAnchorPoints.left.y;
+
+	return createConnectingLine(startPoint, endPoint, sourceNode, targetNode, null);
 }
 
-function initDesigner(ele, svg) {
+function initDesigner(ele, svg, args) {
 	// setStyles({
 	// 	rectShapeStyle: {
 	// 		fill: 'red',
@@ -89,7 +111,7 @@ function initDesigner(ele, svg) {
 	// 		fill: 'blue',
 	// 	}
 	// });
-	Array.prototype.slice.call(document.querySelectorAll('.node')).forEach((node) => {
+	Array.prototype.slice.call(ele.querySelectorAll('.node')).forEach((node) => {
 		node.addEventListener('click', (evt) => {
 			let shapeType = node.getAttribute('shape-type');
 			if (shapeType === ShapeTypes.CIRCLE) {
@@ -100,6 +122,10 @@ function initDesigner(ele, svg) {
 			}
 		})
 	});
+
+	svg.onload = (evt) => {
+		makeDraggable(svg, args);
+	};
 }
 
 // export default function() {

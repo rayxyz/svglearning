@@ -86,7 +86,7 @@
 		</div>
 	</div>
 	<div id="svg-area">
-		<svg id="svg-container" class="example" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20" onload="makeDraggable(evt)">
+		<svg id="svg-container" class="example" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20">
 			<defs id="defs">
 				<marker id="markerArrow" markerWidth="13" markerHeight="13" refX="2" refY="6" orient="auto">
 					<path d="M2,2 L2,11 L10,6 L2,2" style="fill: black;" />
@@ -112,8 +112,7 @@
 	</div>
 
 	<script>
-		var svgContainer = document.querySelector('#svg-container')
-		initDesigner(document, document.querySelector('#svg-container'));
+		var svgContainer = document.querySelector('#svg-container');
 
 		var rawData = {
 			nodes: [{
@@ -171,13 +170,21 @@
 			// let nodes = rawData.nodes;
 			// let connections = rawData.connections;
 			console.log('Generating SVG graph...');
-			svgContainer.append(createRectNode(rawData.nodes[0]));
-			svgContainer.append(createRectNode(rawData.nodes[1]));
+			var nodeEles = [];
+			for (let i = 0; i < rawData.nodes.length; i++) {
+				let ele = createRectNode(rawData.nodes[i]);
+				nodeEles.push(ele);
+				svgContainer.append(ele);
+			}
 			console.log('Generate SVG graph done');
-			connectNodes(rawData.nodes, rawData.connections);
+			return connectNodes(nodeEles, rawData.connections);
 		}
 
-		genGraph();
+		let lines = genGraph();
+		console.log('lines from genGraph: ', lines);
+		initDesigner(document, svgContainer, {
+			lines: lines
+		});
 	</script>
 </body>
 

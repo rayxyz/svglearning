@@ -112,7 +112,72 @@
 	</div>
 
 	<script>
+		var svgContainer = document.querySelector('#svg-container')
 		initDesigner(document, document.querySelector('#svg-container'));
+
+		var rawData = {
+			nodes: [{
+				id: '01',
+				children: [{
+					id: '011',
+					shapeType: 'rect',
+					stroke: 'green',
+					strokeWidth: '0.1',
+					fill: 'red',
+					x: '4',
+					y: '5'
+				}, {
+					id: '012',
+					shapeType: 'text',
+					fontSize: '0.4',
+					fill: 'black',
+					x: '4',
+					y: '5'
+				}]
+			}, {
+				id: '02',
+				children: [{
+					id: '021',
+					shapeType: 'rect',
+					stroke: 'green',
+					strokeWidth: '0.1',
+					fill: 'blue',
+					x: '20',
+					y: '5'
+				}, {
+					id: '022',
+					shapeType: 'text',
+					fontSize: '0.4',
+					fill: 'black',
+					x: '20',
+					y: '5'
+				}]
+			}],
+			connections: [{
+				id: '100',
+				source: {
+					nodeId: '01',
+					posid: 'right',
+				},
+				target: {
+					nodeId: '02',
+					posid: 'left'
+				}
+			}]
+		};
+
+		// rawData: the raw svg data.
+		function genGraph() {
+			// let nodes = rawData.nodes;
+			// let connections = rawData.connections;
+			console.log('Generating SVG graph...');
+			svgContainer.append(createRectNode(rawData.nodes[0]));
+			svgContainer.append(createRectNode(rawData.nodes[1]));
+			console.log('Generate SVG graph done');
+			connectNodes(rawData.nodes, rawData.connections);
+		}
+
+		genGraph();
 	</script>
 </body>
 

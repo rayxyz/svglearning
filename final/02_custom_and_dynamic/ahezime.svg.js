@@ -115,6 +115,12 @@ function setStyles(styles) {
 	}
 }
 
+function genUniqueID() {
+	let randomNum = Math.floor((Math.random() * 10000000) + 1);
+	console.log('randomNum: ', randomNum);
+	return Date.now() + '_' + randomNum;
+}
+
 function getMousePosition(svg, evt) {
 	let CTM = svg.getScreenCTM();
 
@@ -369,7 +375,7 @@ function removeConnectingAnchorPoints() {
 function drawCircleShape(customStyle) {
 	// let pos = getMousePosition(svg, evt);
 	let shape = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-	shape.setAttribute('id', 'circle_' + Date.now());
+	shape.setAttribute('id', 'circle_' + genUniqueID());
 	shape.setAttributeNS(null, 'class', CircleShapeStyle.class);
 	shape.setAttributeNS(null, 'shape-type', CircleShapeStyle.shapeType);
 	shape.setAttributeNS(null, 'cx', customStyle && customStyle.cx ? customStyle.cx : CircleShapeStyle.cx);
@@ -383,7 +389,7 @@ function drawCircleShape(customStyle) {
 
 function drawRectShape(customStyle) {
 	let shape = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-	shape.setAttribute('id', 'rect_' + Date.now());
+	shape.setAttribute('id', 'rect_' + genUniqueID());
 	shape.setAttributeNS(null, 'class', RectShapeStyle.class);
 	shape.setAttributeNS(null, 'shape-type', RectShapeStyle.shapeType);
 	shape.setAttributeNS(null, 'x', customStyle && customStyle.x ? customStyle.x : RectShapeStyle.x);
@@ -402,7 +408,7 @@ function drawRectShape(customStyle) {
 function createConnectingLine(startPoint, endPoint, sourceObj, attrativePoint, customStyle) {
 	line = document.createElementNS('http://www.w3.org/2000/svg',
 		'line');
-	line.setAttribute('id', 'line_' + Date.now());
+	line.setAttribute('id', 'line_' + genUniqueID());
 	line.setAttribute('class', ConnectingLineShapeStyle.class);
 	line.setAttribute('shape-type', ConnectingLineShapeStyle.shapeType);
 	line.setAttributeNS(null, 'x1', startPoint.x);
@@ -426,7 +432,7 @@ function addBBox(svg, shape, customStyle) {
 
 	if (shapeType === ShapeTypes.RECT) {
 		bbox = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-		bbox.setAttribute('id', 'bbox_' + Date.now());
+		bbox.setAttribute('id', 'bbox_' + genUniqueID());
 		bbox.setAttributeNS(null, 'class', BBoxStyle.class);
 		bbox.setAttributeNS(null, 'shape-type', BBoxStyle.shapeType);
 		bbox.setAttributeNS(null, 'x', x);
@@ -451,7 +457,7 @@ function addBBox(svg, shape, customStyle) {
 		let height = 2 * r;
 
 		bbox = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-		bbox.setAttribute('id', 'bbox_' + Date.now());
+		bbox.setAttribute('id', 'bbox_' + genUniqueID());
 		bbox.setAttributeNS(null, 'class', BBoxStyle.class);
 		bbox.setAttributeNS(null, 'shape-type', BBoxStyle.shapeType);
 		bbox.setAttributeNS(null, 'x', x);
@@ -492,7 +498,7 @@ function addBBox(svg, shape, customStyle) {
 		}
 
 		bbox = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-		bbox.setAttribute('id', 'bbox_' + Date.now());
+		bbox.setAttribute('id', 'bbox_' + genUniqueID());
 		bbox.setAttributeNS(null, 'class', BBoxStyle.class);
 		bbox.setAttributeNS(null, 'shape-type', BBoxStyle.shapeType);
 		bbox.setAttributeNS(null, 'x', x);
@@ -1006,6 +1012,8 @@ function makeDraggable(evt) {
 	function endDrag(evt) {
 		if (lineCreated) {
 			if (isNearAttractivePoint && attrativePoint && lineTargetObj) {
+				console.log('isNearAttractivePoint: ', isNearAttractivePoint, ' attrativePoint: ',
+					attrativePoint, ' lineSourceObj: ', lineSourceObj, ', lineTargetObj: ', lineTargetObj);
 				if (lineSourceObj && lineTargetObj && lineSourceObj.getAttributeNS(null, 'id') == lineTargetObj.getAttributeNS(null, 'id')) {
 					removeLine(line);
 				} else {

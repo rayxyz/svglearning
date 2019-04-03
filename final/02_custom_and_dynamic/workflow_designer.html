@@ -122,7 +122,7 @@
 					shapeType: 'rect',
 					stroke: 'green',
 					strokeWidth: '0.1',
-					fill: 'red',
+					fill: 'url(#yellowGradient)',
 					x: '4',
 					y: '5'
 				}, {
@@ -140,7 +140,7 @@
 					shapeType: 'rect',
 					stroke: 'green',
 					strokeWidth: '0.1',
-					fill: 'blue',
+					fill: 'url(#yellowGradient)',
 					x: '20',
 					y: '5'
 				}, {
@@ -150,6 +150,24 @@
 					fill: 'black',
 					x: '20',
 					y: '5'
+				}]
+			}, {
+				id: '03',
+				children: [{
+					id: '031',
+					shapeType: 'circle',
+					stroke: 'gray',
+					strokeWidth: '0.1',
+					fill: 'url(#greenGradient)',
+					cx: '15',
+					cy: '10'
+				}, {
+					id: '032',
+					shapeType: 'text',
+					fontSize: '0.4',
+					fill: 'black',
+					x: '15',
+					y: '10'
 				}]
 			}],
 			connections: [{
@@ -162,26 +180,21 @@
 					nodeId: '02',
 					posid: 'left'
 				}
+			}, {
+				id: '200',
+				source: {
+					nodeId: '03',
+					posid: 'west',
+				},
+				target: {
+					nodeId: '01',
+					posid: 'right'
+				}
 			}]
 		};
 
-		// rawData: the raw svg data.
-		function genGraph() {
-			// let nodes = rawData.nodes;
-			// let connections = rawData.connections;
-			console.log('Generating SVG graph...');
-			var nodeEles = [];
-			for (let i = 0; i < rawData.nodes.length; i++) {
-				let ele = createRectNode(rawData.nodes[i]);
-				nodeEles.push(ele);
-				svgContainer.append(ele);
-			}
-			console.log('Generate SVG graph done');
-			return connectNodes(nodeEles, rawData.connections);
-		}
 
-		let lines = genGraph();
-		console.log('lines from genGraph: ', lines);
+		let lines = genDiagram(rawData, svgContainer);
 		initDesigner(document, svgContainer, {
 			lines: lines
 		});

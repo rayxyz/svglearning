@@ -299,8 +299,6 @@ function calculateCircleConnectingAnchorPoints(circle) {
 		}
 	}
 
-	console.log('%%%%%%%%%%%% cx: ', cx, ', cy: ', cy, ', r: ', r);
-
 	// How to calculate the northeast anchor point:
 	// 
 	// Math.sin(x)
@@ -375,7 +373,7 @@ function removeConnectingAnchorPoints() {
 }
 
 function drawCircleShape(customStyle) {
-	// let pos = getMousePosition(svg, evt);
+	console.log('customStyle: ', customStyle);
 	let shape = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
 	shape.setAttribute('id', 'circle_' + genUniqueID());
 	shape.setAttributeNS(null, 'class', CircleShapeStyle.class);
@@ -419,7 +417,6 @@ function createConnectingLine(startPoint, endPoint, source, target, customStyle)
 	line.setAttributeNS(null, 'y2', endPoint.y);
 	line.setAttributeNS(null, 'stroke-width', customStyle && customStyle.strokeWidth ? customStyle.strokeWidth : ConnectingLineShapeStyle.strokeWidth);
 	line.setAttributeNS(null, 'stroke', customStyle && customStyle.stroke ? customStyle.stroke : ConnectingLineShapeStyle.stroke);
-	// line.connectedStartPointRaw = attrativePoint;
 	line.startPoint = startPoint;
 	line.endPoint = endPoint;
 	line.source = source;
@@ -527,6 +524,7 @@ function removeBboxes() {
 
 function removeBboxedElements(bboxedElements) {
 	if (!bboxedElements || !bboxedElements.length) return;
+	console.log('bboxedElements: ', bboxedElements);
 	if (bboxedElements.length > 0) {
 		Array.prototype.slice.call(bboxedElements).forEach((ele) => {
 			if (ele.parentNode && getShapeType(ele.parentNode) === ShapeTypes.GROUP) {
@@ -634,7 +632,7 @@ function getRectConnectingAnchorPoint(connectingAnchorPoints, posid) {
 			break;
 	}
 
-	return {x: x, y: y};
+	return { x: x, y: y };
 }
 
 function getCircleConnectingAnchorPoint(connectingAnchorPoints, posid) {
@@ -677,18 +675,18 @@ function getCircleConnectingAnchorPoint(connectingAnchorPoints, posid) {
 			break;
 	}
 
-	return {x: x, y: y};
+	return { x: x, y: y };
 }
 
 function getConnectingAnchorPoint(shapeType, connectingAnchorPoints, posid) {
 	if (shapeType === ShapeTypes.RECT) {
 		return getRectConnectingAnchorPoint(connectingAnchorPoints, posid);
-	} 
-	
-	if(shapeType === ShapeTypes.CIRCLE) {
+	}
+
+	if (shapeType === ShapeTypes.CIRCLE) {
 		return getCircleConnectingAnchorPoint(connectingAnchorPoints, posid);
 	}
-	
+
 	return null
 }
 
@@ -696,7 +694,7 @@ function updateLines(shape, lines) {
 	// TODO 
 	// Only update the lines related to shape
 	//
-	
+
 	for (let i = 0; i < lines.length; i++) {
 		if (!lines[i].startPoint || !lines[i].endPoint) {
 			console.log('Invalid line start point or end point');
@@ -751,14 +749,7 @@ function updateLines(shape, lines) {
 	}
 }
 
-// var line = {};
-// line.connect = (sourceShape, targetShape) => {
-
-// };
-
 function makeDraggable(svg, args) {
-	// let svg = evt.target;
-
 	let lines = [];
 
 	let mouseDown = false;
@@ -789,29 +780,43 @@ function makeDraggable(svg, args) {
 	svg.addEventListener('mousemove', drag);
 	svg.addEventListener('mouseup', endDrag);
 
-	// Init designer
+	// Init designer by arguments given.
 	if (args) {
-		if (args.lines && args.lines.length && args.lings.length > 0) {
-			console.log('I got the lines from dynamic generating...');
+		if (args.lines && args.lines.length && args.lines.length > 0) {
 			lines = args.lines;
+			lines.forEach((line) => {
+				svg.append(line);
+			});
 		}
 	}
 
 	document.addEventListener('keydown', (evt) => {
 		if (evt.key == 'Delete') {
-			let linesTobeDeleted = [];
 			let eleIdList = [];
 			for (let i = 0; i < bboxedElements.length; i++) {
 				eleIdList.push(bboxedElements[i].getAttributeNS(null, 'id'));
 			}
+
+			let counterOfDeletedLines = 0;
+			console.log('lines: ', lines);
 			for (let i = 0; i < lines.length; i++) {
 				for (let j = 0; j < eleIdList.length; j++) {
 					if (eleIdList[j] == lines[i].source.getAttributeNS(null, 'id') ||
 						eleIdList[j] == lines[i].target.getAttributeNS(null, 'id')) {
+						// Remove element from document tree.
 						lines[i].remove();
+						// Remove from memory:
+						// i: index to remove, 1: remove only one element.
+						// Don't use it, because it will affect then length of the lines in looping,
+						// use the delete key word and a counter indstead.
+						// lines.splice(i, 1);
+						// delete lines[i]; // Free memory
+						counterOfDeletedLines++; // Store the number of lines deleted
 					}
 				}
 			}
+			// lines.length -= counterOfDeletedLines;
+
 			removeBboxedElements(bboxedElements);
 		}
 	});
@@ -953,7 +958,6 @@ function makeDraggable(svg, args) {
 			}
 			endPoint = getMousePosition(svg, evt);
 			if (startPoint && endPoint && !(startPoint.x == endPoint.x && startPoint.y == endPoint.y)) {
-				// console.log('lineCreated: ', lineCreated, ', isNearAttractivePoint: ', isNearAttractivePoint, ', attrativePoint: ', attrativePoint);
 				if (!lineCreated && isNearAttractivePoint && attrativePoint) {
 					startPoint.x = parseFloat(attrativePoint.getAttributeNS(null, 'cx'));
 					startPoint.y = parseFloat(attrativePoint.getAttributeNS(null, 'cy'));
@@ -1022,22 +1026,17 @@ function makeDraggable(svg, args) {
 	function endDrag(evt) {
 		if (lineCreated) {
 			if (isNearAttractivePoint && attrativePoint && lineTargetObj) {
-				console.log('isNearAttractivePoint: ', isNearAttractivePoint, ' attrativePoint: ',
-					attrativePoint, ' lineSourceObj: ', lineSourceObj, ', lineTargetObj: ', lineTargetObj);
 				if (lineSourceObj && lineTargetObj && lineSourceObj.getAttributeNS(null, 'id') == lineTargetObj.getAttributeNS(null, 'id')) {
 					removeLine(line);
 				} else {
-					console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
 					endPoint.x = parseFloat(attrativePoint.getAttributeNS(null, 'cx'));
 					endPoint.y = parseFloat(attrativePoint.getAttributeNS(null, 'cy'));
 					endPoint.posid = attrativePoint.getAttributeNS(null, 'posid');
 					line.setAttributeNS(null, 'x2', endPoint.x);
 					line.setAttributeNS(null, 'y2', endPoint.y);
 					line.endPoint = endPoint;
-					// line.connectedEndPointRaw = attrativePoint;
 					line.target = lineTargetObj;
 					lines.push(line);
-					console.log('lines: ', lines);
 				}
 			} else {
 				removeLine(line);

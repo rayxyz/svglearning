@@ -48,6 +48,7 @@
 
 		#action-button-area button {
 			margin-left: 10px;
+			margin-bottom: 10px;
 		}
 
 		#svg-area {
@@ -94,7 +95,8 @@
 			</div>
 		</div>
 		<div id="action-button-area">
-			<button onclick="exportSVGDiagramModel(event)">Hello world</button>
+			<button onclick="exportSVGDiagramModel(event)">保存模型</button>
+			<button onclick="exportASImage(event)">到处为图片</button>
 		</div>
 	</div>
 	<div id="svg-area">
@@ -121,6 +123,7 @@
 			</defs>
 			<!-- <rect id="canvas" width="100%" height="100%" fill="url(#grid)" /> -->
 		</svg>
+		<canvas id="canvas" hidden="true"></canvas>
 	</div>
 
 	<script>
@@ -130,7 +133,7 @@
 			"nodes": [{
 				"id": "01",
 				"shape": {
-					"id": "rect_1554364926677_2815098",
+					"id": "rect_1554367709174_371377",
 					"shapeType": "rect",
 					"stroke": "0",
 					"strokeWidth": "0.3",
@@ -148,100 +151,100 @@
 			}, {
 				"id": "02",
 				"shape": {
-					"id": "rect_1554364926678_3082266",
+					"id": "rect_1554367709174_8478307",
 					"shapeType": "rect",
 					"stroke": "0",
 					"strokeWidth": "0.3",
 					"fill": "url(#yellowGradient)",
-					"x": "20",
-					"y": "5"
+					"x": "19.974446337308347",
+					"y": "9.44633730834753"
 				},
 				"text": {
 					"id": "022",
 					"shapeType": "text",
 					"fontSize": "0.4",
-					"x": "20",
-					"y": "5.85"
+					"x": "19.974446337308347",
+					"y": "10.296337308347525"
 				}
 			}, {
 				"id": "03",
 				"shape": {
-					"id": "circle_1554364926681_2596489",
+					"id": "circle_1554367709176_7617077",
 					"shapeType": "circle",
 					"stroke": "0",
 					"strokeWidth": "0.1",
 					"fill": "url(#greenGradient)",
-					"cx": "15.485519590287817",
-					"cy": "9.080068143100512",
+					"cx": "16.07325383243383",
+					"cy": "11.916524701350355",
 					"radius": "1"
 				},
 				"text": {
 					"id": "032",
 					"shapeType": "text",
 					"fontSize": "0.4",
-					"x": "14.485519590287817",
-					"y": "9.080068143100512"
+					"x": "15.073253832433833",
+					"y": "11.916524701350355"
 				}
 			}, {
 				"id": "node_1554365031516_1336272",
 				"shape": {
-					"id": "circle_1554365031518_8195814",
+					"id": "circle_1554367709177_6373780",
 					"shapeType": "circle",
 					"stroke": "0",
 					"strokeWidth": "0.1",
 					"fill": "url(#greenGradient)",
-					"cx": "11.935264051757002",
-					"cy": "0.2913117539137602",
+					"cx": "11.70528108753213",
+					"cy": "1.8245315168598701",
 					"radius": "1"
 				},
 				"text": {
 					"id": "032",
 					"shapeType": "text",
 					"fontSize": "0.4",
-					"x": "10.935264051757002",
-					"y": "0.2913117539137602"
+					"x": "10.70528108753213",
+					"y": "1.8245315168598701"
 				}
 			}, {
 				"id": "node_1554365035549_6608152",
 				"shape": {
-					"id": "rect_1554365035550_167271",
+					"id": "rect_1554367709177_1246536",
 					"shapeType": "rect",
 					"stroke": "0",
 					"strokeWidth": "0.3",
 					"fill": "red",
-					"x": "14.163543441588315",
-					"y": "15.142248722316866"
+					"x": "14.521294719271452",
+					"y": "17.697614990758634"
 				},
 				"text": {
 					"id": "012",
 					"shapeType": "text",
 					"fontSize": "0.4",
-					"x": "14.163543441588315",
-					"y": "15.992248722316868"
+					"x": "14.521294719271452",
+					"y": "18.547614990758635"
 				}
 			}, {
 				"id": "node_1554365035940_9495784",
 				"shape": {
-					"id": "circle_1554365035941_7981644",
+					"id": "circle_1554367709177_8040151",
 					"shapeType": "circle",
 					"stroke": "0",
 					"strokeWidth": "0.1",
 					"fill": "url(#greenGradient)",
-					"cx": "20.546848381601365",
-					"cy": "-0.6286201014372244",
+					"cx": "21.517887563906324",
+					"cy": "1.9778534923878468",
 					"radius": "1"
 				},
 				"text": {
 					"id": "032",
 					"shapeType": "text",
 					"fontSize": "0.4",
-					"x": "19.546848381601365",
-					"y": "-0.6286201014372244"
+					"x": "20.517887563906324",
+					"y": "1.9778534923878468"
 				}
 			}, {
 				"id": "node_1554365101204_9096183",
 				"shape": {
-					"id": "rect_1554365101204_3036848",
+					"id": "rect_1554367709178_6099317",
 					"shapeType": "rect",
 					"stroke": "0",
 					"strokeWidth": "0.3",
@@ -258,7 +261,7 @@
 				}
 			}],
 			"connections": [{
-				"id": "line_1554364926681_7518235",
+				"id": "line_1554367709178_6361489",
 				"source": {
 					"id": "01",
 					"posid": "right"
@@ -268,7 +271,7 @@
 					"posid": "left"
 				}
 			}, {
-				"id": "line_1554364926682_110664",
+				"id": "line_1554367709178_7033302",
 				"source": {
 					"id": "03",
 					"posid": "west"
@@ -278,7 +281,7 @@
 					"posid": "right"
 				}
 			}, {
-				"id": "line_1554365042689_1556324",
+				"id": "line_1554367709178_2870058",
 				"source": {
 					"id": "node_1554365035549_6608152",
 					"posid": "top"
@@ -288,7 +291,7 @@
 					"posid": "south"
 				}
 			}, {
-				"id": "line_1554365044373_3370121",
+				"id": "line_1554367709179_4452977",
 				"source": {
 					"id": "node_1554365035549_6608152",
 					"posid": "right"
@@ -298,7 +301,7 @@
 					"posid": "bottom"
 				}
 			}, {
-				"id": "line_1554365050243_3490998",
+				"id": "line_1554367709179_977387",
 				"source": {
 					"id": "node_1554365035940_9495784",
 					"posid": "south"
@@ -308,7 +311,7 @@
 					"posid": "top"
 				}
 			}, {
-				"id": "line_1554365052172_4277347",
+				"id": "line_1554367709179_3904841",
 				"source": {
 					"id": "02",
 					"posid": "right"
@@ -318,7 +321,7 @@
 					"posid": "east"
 				}
 			}, {
-				"id": "line_1554365054148_5314818",
+				"id": "line_1554367709179_3850719",
 				"source": {
 					"id": "node_1554365035940_9495784",
 					"posid": "southwest"
@@ -328,7 +331,7 @@
 					"posid": "east"
 				}
 			}, {
-				"id": "line_1554365065889_9580409",
+				"id": "line_1554367709179_6217830",
 				"source": {
 					"id": "01",
 					"posid": "bottom"
@@ -338,17 +341,7 @@
 					"posid": "left"
 				}
 			}, {
-				"id": "line_1554365070429_8176283",
-				"source": {
-					"id": "node_1554365035549_6608152",
-					"posid": "right"
-				},
-				"target": {
-					"id": "03",
-					"posid": "east"
-				}
-			}, {
-				"id": "line_1554365073190_1802848",
+				"id": "line_1554367709181_2400993",
 				"source": {
 					"id": "03",
 					"posid": "north"
@@ -358,7 +351,7 @@
 					"posid": "south"
 				}
 			}, {
-				"id": "line_1554365075613_6658165",
+				"id": "line_1554367709181_2582455",
 				"source": {
 					"id": "node_1554365031516_1336272",
 					"posid": "west"
@@ -368,7 +361,7 @@
 					"posid": "top"
 				}
 			}, {
-				"id": "line_1554365079349_7046061",
+				"id": "line_1554367709181_567349",
 				"source": {
 					"id": "01",
 					"posid": "right"
@@ -378,7 +371,7 @@
 					"posid": "southwest"
 				}
 			}, {
-				"id": "line_1554365082068_4799622",
+				"id": "line_1554367709181_8718972",
 				"source": {
 					"id": "node_1554365035940_9495784",
 					"posid": "west"
@@ -388,7 +381,7 @@
 					"posid": "northeast"
 				}
 			}, {
-				"id": "line_1554365087333_1013068",
+				"id": "line_1554367709181_7377381",
 				"source": {
 					"id": "02",
 					"posid": "bottom"
@@ -398,17 +391,7 @@
 					"posid": "northeast"
 				}
 			}, {
-				"id": "line_1554365094533_2559127",
-				"source": {
-					"id": "03",
-					"posid": "southeast"
-				},
-				"target": {
-					"id": "node_1554365035549_6608152",
-					"posid": "bottom"
-				}
-			}, {
-				"id": "line_1554365103972_6457901",
+				"id": "line_1554367709181_9400618",
 				"source": {
 					"id": "node_1554365101204_9096183",
 					"posid": "top"
@@ -418,7 +401,7 @@
 					"posid": "left"
 				}
 			}, {
-				"id": "line_1554365106901_7388330",
+				"id": "line_1554367709181_6100876",
 				"source": {
 					"id": "node_1554365101204_9096183",
 					"posid": "right"
@@ -441,6 +424,63 @@
 			console.log(model);
 			console.log(JSON.stringify(model));
 		}
+
+		function exportASImage(evt) {
+			// console.log(svg2img());
+
+			let canvas = document.getElementById('canvas');
+			var ctx = canvas.getContext('2d');
+
+			// usage:
+			// drawInlineSVG(document, svg.outerHTML, function () {
+			// 	console.log(canvas.toDataURL());  // -> PNG data-uri
+			// });
+
+			//usage :
+			drawInlineSVG(svg, ctx, function () {
+				console.log(canvas.toDataURL());
+			});
+		}
+
+		function svg2img() {
+			var xml = new XMLSerializer().serializeToString(svg);
+			var svg64 = btoa(xml); //for utf8: btoa(unescape(encodeURIComponent(xml)))
+			var b64start = 'data:image/svg+xml;base64,';
+			var image64 = b64start + svg64;
+			return image64;
+		};
+
+		// function drawInlineSVG(ctx, rawSVG, callback) {
+		// 	console.log('draw the fucking image');
+		// 	console.log('raw svg: ', rawSVG);
+		// 	var svgData = new Blob([rawSVG], { type: "image/svg+xml;charset=utf-8" });
+		// 	console.log('svg data: ', svgData);
+		// 	let domURL = self.URL || self.webkitURL || self,
+		// 		url = domURL.createObjectURL(svgData),
+		// 		img = new Image;
+
+		// 	img.onload = function () {
+		// 		console.log('onload.............................................');
+		// 		ctx.drawImage(this, 0, 0);
+		// 		domURL.revokeObjectURL(url);
+		// 		callback(this);
+		// 	};
+
+		// 	img.src = url;
+
+		// 	console.log('draw image done', img);
+		// }
+
+		function drawInlineSVG(svgElement, ctx, callback) {
+			var svgURL = new XMLSerializer().serializeToString(svgElement);
+			var img = new Image();
+			img.onload = function () {
+				ctx.drawImage(this, 0, 0);
+				callback();
+			}
+			img.src = 'data:image/svg+xml; charset=utf8, ' + encodeURIComponent(svgURL);
+		}
+
 	</script>
 </body>
 

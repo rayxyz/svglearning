@@ -16,7 +16,12 @@
 			float: left;
 		}
 
-		#left-panel .panel-title {
+		#shapes-area {
+			width: 100%;
+			height: 50%;
+		}
+
+		#shapes-area .panel-title {
 			font-family: Arial;
 			height: 30px;
 			margin-bottom: 20px;
@@ -24,7 +29,7 @@
 			text-align: center;
 		}
 
-		#left-panel .node {
+		#shapes-area .node-shape {
 			/* background-color: azure; */
 			/* margin: 10px; */
 			width: 100%;
@@ -33,8 +38,16 @@
 			background-color: white;
 		}
 
-		#left-panel .node img {
+		#shapes-area .node-shape img {
 			width: 95%;
+		}
+
+		#action-button-area {
+			margin-top: 30px;
+		}
+
+		#action-button-area button {
+			margin-left: 10px;
 		}
 
 		#svg-area {
@@ -69,20 +82,19 @@
 
 <body>
 	<div id="left-panel">
-		<div class="panel-title">
-			<span>节点形状</span>
+		<div id="shapes-area">
+			<div class="panel-title">
+				<span>节点形状</span>
+			</div>
+			<div class="node-shape" shape-type="rect">
+				<img src="./rect.png" />
+			</div>
+			<div class="node-shape" shape-type="circle">
+				<img src="./circle.png" />
+			</div>
 		</div>
-		<div class="node" shape-type="rect">
-			<img src="./rect.png" />
-		</div>
-		<div class="node" shape-type="circle">
-			<img src="./circle.png" />
-		</div>
-		<div class="node">
-
-		</div>
-		<div class="node">
-
+		<div id="action-button-area">
+			<button onclick="exportSVGDiagramModel(event)">Hello world</button>
 		</div>
 	</div>
 	<div id="svg-area">
@@ -112,92 +124,323 @@
 	</div>
 
 	<script>
-		var svgContainer = document.querySelector('#svg-container');
+		var svg = document.querySelector('#svg-container');
 
-		var rawData = {
-			nodes: [{
-				id: '01',
-				children: [{
-					id: '011',
-					shapeType: 'rect',
-					stroke: 'green',
-					strokeWidth: '0.1',
-					fill: 'url(#yellowGradient)',
-					x: '4',
-					y: '5'
-				}, {
-					id: '012',
-					shapeType: 'text',
-					fontSize: '0.4',
-					fill: 'black',
-					x: '4',
-					y: '5'
-				}]
-			}, {
-				id: '02',
-				children: [{
-					id: '021',
-					shapeType: 'rect',
-					stroke: 'green',
-					strokeWidth: '0.1',
-					fill: 'url(#yellowGradient)',
-					x: '20',
-					y: '5'
-				}, {
-					id: '022',
-					shapeType: 'text',
-					fontSize: '0.4',
-					fill: 'black',
-					x: '20',
-					y: '5'
-				}]
-			}, {
-				id: '03',
-				children: [{
-					id: '031',
-					shapeType: 'circle',
-					stroke: 'gray',
-					strokeWidth: '0.1',
-					fill: 'url(#greenGradient)',
-					cx: '15',
-					cy: '10'
-				}, {
-					id: '032',
-					shapeType: 'text',
-					fontSize: '0.4',
-					fill: 'black',
-					x: '15',
-					y: '10'
-				}]
-			}],
-			connections: [{
-				id: '100',
-				source: {
-					nodeId: '01',
-					posid: 'right',
+		var dataModel = {
+			"nodes": [{
+				"id": "01",
+				"shape": {
+					"id": "rect_1554364926677_2815098",
+					"shapeType": "rect",
+					"stroke": "0",
+					"strokeWidth": "0.3",
+					"fill": "url(#yellowGradient)",
+					"x": "4",
+					"y": "5"
 				},
-				target: {
-					nodeId: '02',
-					posid: 'left'
+				"text": {
+					"id": "012",
+					"shapeType": "text",
+					"fontSize": "0.4",
+					"x": "4",
+					"y": "5.85"
 				}
 			}, {
-				id: '200',
-				source: {
-					nodeId: '03',
-					posid: 'west',
+				"id": "02",
+				"shape": {
+					"id": "rect_1554364926678_3082266",
+					"shapeType": "rect",
+					"stroke": "0",
+					"strokeWidth": "0.3",
+					"fill": "url(#yellowGradient)",
+					"x": "20",
+					"y": "5"
 				},
-				target: {
-					nodeId: '01',
-					posid: 'right'
+				"text": {
+					"id": "022",
+					"shapeType": "text",
+					"fontSize": "0.4",
+					"x": "20",
+					"y": "5.85"
+				}
+			}, {
+				"id": "03",
+				"shape": {
+					"id": "circle_1554364926681_2596489",
+					"shapeType": "circle",
+					"stroke": "0",
+					"strokeWidth": "0.1",
+					"fill": "url(#greenGradient)",
+					"cx": "15.485519590287817",
+					"cy": "9.080068143100512",
+					"radius": "1"
+				},
+				"text": {
+					"id": "032",
+					"shapeType": "text",
+					"fontSize": "0.4",
+					"x": "14.485519590287817",
+					"y": "9.080068143100512"
+				}
+			}, {
+				"id": "node_1554365031516_1336272",
+				"shape": {
+					"id": "circle_1554365031518_8195814",
+					"shapeType": "circle",
+					"stroke": "0",
+					"strokeWidth": "0.1",
+					"fill": "url(#greenGradient)",
+					"cx": "11.935264051757002",
+					"cy": "0.2913117539137602",
+					"radius": "1"
+				},
+				"text": {
+					"id": "032",
+					"shapeType": "text",
+					"fontSize": "0.4",
+					"x": "10.935264051757002",
+					"y": "0.2913117539137602"
+				}
+			}, {
+				"id": "node_1554365035549_6608152",
+				"shape": {
+					"id": "rect_1554365035550_167271",
+					"shapeType": "rect",
+					"stroke": "0",
+					"strokeWidth": "0.3",
+					"fill": "red",
+					"x": "14.163543441588315",
+					"y": "15.142248722316866"
+				},
+				"text": {
+					"id": "012",
+					"shapeType": "text",
+					"fontSize": "0.4",
+					"x": "14.163543441588315",
+					"y": "15.992248722316868"
+				}
+			}, {
+				"id": "node_1554365035940_9495784",
+				"shape": {
+					"id": "circle_1554365035941_7981644",
+					"shapeType": "circle",
+					"stroke": "0",
+					"strokeWidth": "0.1",
+					"fill": "url(#greenGradient)",
+					"cx": "20.546848381601365",
+					"cy": "-0.6286201014372244",
+					"radius": "1"
+				},
+				"text": {
+					"id": "032",
+					"shapeType": "text",
+					"fontSize": "0.4",
+					"x": "19.546848381601365",
+					"y": "-0.6286201014372244"
+				}
+			}, {
+				"id": "node_1554365101204_9096183",
+				"shape": {
+					"id": "rect_1554365101204_3036848",
+					"shapeType": "rect",
+					"stroke": "0",
+					"strokeWidth": "0.3",
+					"fill": "red",
+					"x": "1.9488926744167863",
+					"y": "15.065587734857521"
+				},
+				"text": {
+					"id": "012",
+					"shapeType": "text",
+					"fontSize": "0.4",
+					"x": "1.9488926744167863",
+					"y": "15.915587734857521"
+				}
+			}],
+			"connections": [{
+				"id": "line_1554364926681_7518235",
+				"source": {
+					"id": "01",
+					"posid": "right"
+				},
+				"target": {
+					"id": "02",
+					"posid": "left"
+				}
+			}, {
+				"id": "line_1554364926682_110664",
+				"source": {
+					"id": "03",
+					"posid": "west"
+				},
+				"target": {
+					"id": "01",
+					"posid": "right"
+				}
+			}, {
+				"id": "line_1554365042689_1556324",
+				"source": {
+					"id": "node_1554365035549_6608152",
+					"posid": "top"
+				},
+				"target": {
+					"id": "03",
+					"posid": "south"
+				}
+			}, {
+				"id": "line_1554365044373_3370121",
+				"source": {
+					"id": "node_1554365035549_6608152",
+					"posid": "right"
+				},
+				"target": {
+					"id": "02",
+					"posid": "bottom"
+				}
+			}, {
+				"id": "line_1554365050243_3490998",
+				"source": {
+					"id": "node_1554365035940_9495784",
+					"posid": "south"
+				},
+				"target": {
+					"id": "02",
+					"posid": "top"
+				}
+			}, {
+				"id": "line_1554365052172_4277347",
+				"source": {
+					"id": "02",
+					"posid": "right"
+				},
+				"target": {
+					"id": "node_1554365035940_9495784",
+					"posid": "east"
+				}
+			}, {
+				"id": "line_1554365054148_5314818",
+				"source": {
+					"id": "node_1554365035940_9495784",
+					"posid": "southwest"
+				},
+				"target": {
+					"id": "node_1554365031516_1336272",
+					"posid": "east"
+				}
+			}, {
+				"id": "line_1554365065889_9580409",
+				"source": {
+					"id": "01",
+					"posid": "bottom"
+				},
+				"target": {
+					"id": "node_1554365035549_6608152",
+					"posid": "left"
+				}
+			}, {
+				"id": "line_1554365070429_8176283",
+				"source": {
+					"id": "node_1554365035549_6608152",
+					"posid": "right"
+				},
+				"target": {
+					"id": "03",
+					"posid": "east"
+				}
+			}, {
+				"id": "line_1554365073190_1802848",
+				"source": {
+					"id": "03",
+					"posid": "north"
+				},
+				"target": {
+					"id": "node_1554365031516_1336272",
+					"posid": "south"
+				}
+			}, {
+				"id": "line_1554365075613_6658165",
+				"source": {
+					"id": "node_1554365031516_1336272",
+					"posid": "west"
+				},
+				"target": {
+					"id": "01",
+					"posid": "top"
+				}
+			}, {
+				"id": "line_1554365079349_7046061",
+				"source": {
+					"id": "01",
+					"posid": "right"
+				},
+				"target": {
+					"id": "node_1554365035940_9495784",
+					"posid": "southwest"
+				}
+			}, {
+				"id": "line_1554365082068_4799622",
+				"source": {
+					"id": "node_1554365035940_9495784",
+					"posid": "west"
+				},
+				"target": {
+					"id": "03",
+					"posid": "northeast"
+				}
+			}, {
+				"id": "line_1554365087333_1013068",
+				"source": {
+					"id": "02",
+					"posid": "bottom"
+				},
+				"target": {
+					"id": "03",
+					"posid": "northeast"
+				}
+			}, {
+				"id": "line_1554365094533_2559127",
+				"source": {
+					"id": "03",
+					"posid": "southeast"
+				},
+				"target": {
+					"id": "node_1554365035549_6608152",
+					"posid": "bottom"
+				}
+			}, {
+				"id": "line_1554365103972_6457901",
+				"source": {
+					"id": "node_1554365101204_9096183",
+					"posid": "top"
+				},
+				"target": {
+					"id": "01",
+					"posid": "left"
+				}
+			}, {
+				"id": "line_1554365106901_7388330",
+				"source": {
+					"id": "node_1554365101204_9096183",
+					"posid": "right"
+				},
+				"target": {
+					"id": "03",
+					"posid": "southwest"
 				}
 			}]
 		};
 
-
-		let lines = genDiagram(rawData, svgContainer);
-		initDesigner(document, svgContainer, {
+		let lines = genDiagram(dataModel, svg);
+		initDesigner(document, svg, {
 			lines: lines
 		});
+
+		function exportSVGDiagramModel(evt) {
+			let model = exportDiagramModel(svg);
+			console.log('the diagram model is: ');
+			console.log(model);
+			console.log(JSON.stringify(model));
+		}
 	</script>
 </body>
 

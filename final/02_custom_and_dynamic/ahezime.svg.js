@@ -13,6 +13,7 @@ var RectShapeStyle = {
 	y: '0.5',
 	width: '3',
 	height: '1.7',
+	stroke: '0',
 	strokeWidth: '0.3',
 	fill: 'url(#yellowGradient)',
 	rx: 0.2,
@@ -26,9 +27,21 @@ var CircleShapeStyle = {
 	cx: '2',
 	cy: '0.5',
 	radius: '1',
+	stroke: '0',
+	strokeWidth: 0.1,
 	fill: 'url(#greenGradient)',
 	opacity: '0.95'
 };
+
+var TextShapeStyle = {
+	class: 'text',
+	shapeType: 'text',
+	fontSize: '0.4',
+	fill: 'black',
+	x: '1',
+	y: '1',
+	content: 'new text'
+}
 
 var DraggableStyle = {
 	class: 'draggable',
@@ -354,7 +367,7 @@ function calculateCircleConnectingAnchorPoints(circle) {
 
 function drawConnectingAnchorPoints(cx, cy, posid) {
 	let shape = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-	shape.setAttributeNS(null, 'class', ConnectingAnchorPointStyle.class);
+	shape.setAttribute('class', ConnectingAnchorPointStyle.class);
 	shape.setAttributeNS(null, 'shape-type', ConnectingAnchorPointStyle.shapeType);
 	shape.setAttributeNS(null, 'cx', cx);
 	shape.setAttributeNS(null, 'cy', cy);
@@ -376,11 +389,13 @@ function drawCircleShape(customStyle) {
 	console.log('customStyle: ', customStyle);
 	let shape = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
 	shape.setAttribute('id', 'circle_' + genUniqueID());
-	shape.setAttributeNS(null, 'class', CircleShapeStyle.class);
+	shape.setAttribute('class', CircleShapeStyle.class);
 	shape.setAttributeNS(null, 'shape-type', CircleShapeStyle.shapeType);
 	shape.setAttributeNS(null, 'cx', customStyle && customStyle.cx ? customStyle.cx : CircleShapeStyle.cx);
 	shape.setAttributeNS(null, 'cy', customStyle && customStyle.cy ? customStyle.cy : CircleShapeStyle.cy);
 	shape.setAttributeNS(null, 'r', customStyle && customStyle.radius ? customStyle.radius : CircleShapeStyle.radius);
+	shape.setAttributeNS(null, 'stroke', customStyle && customStyle.stroke ? customStyle.stroke : CircleShapeStyle.stroke);
+	shape.setAttributeNS(null, 'stroke-width', customStyle && customStyle.strokeWidth ? customStyle.strokeWidth : CircleShapeStyle.strokeWidth);
 	shape.setAttributeNS(null, 'fill', customStyle && customStyle.fill ? customStyle.fill : CircleShapeStyle.fill);
 	shape.setAttributeNS(null, 'opacity', customStyle && customStyle.opacity ? customStyle.opacity : CircleShapeStyle.opacity);
 
@@ -390,7 +405,7 @@ function drawCircleShape(customStyle) {
 function drawRectShape(customStyle) {
 	let shape = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
 	shape.setAttribute('id', 'rect_' + genUniqueID());
-	shape.setAttributeNS(null, 'class', RectShapeStyle.class);
+	shape.setAttribute('class', RectShapeStyle.class);
 	shape.setAttributeNS(null, 'shape-type', RectShapeStyle.shapeType);
 	shape.setAttributeNS(null, 'x', customStyle && customStyle.x ? customStyle.x : RectShapeStyle.x);
 	shape.setAttributeNS(null, 'y', customStyle && customStyle.y ? customStyle.y : RectShapeStyle.y);
@@ -398,11 +413,26 @@ function drawRectShape(customStyle) {
 	shape.setAttributeNS(null, 'height', customStyle && customStyle.height ? customStyle.height : RectShapeStyle.height);
 	shape.setAttributeNS(null, 'rx', customStyle && customStyle.rx ? customStyle.rx : RectShapeStyle.rx);
 	shape.setAttributeNS(null, 'ry', customStyle && customStyle.ry ? customStyle.ry : RectShapeStyle.ry);
+	shape.setAttributeNS(null, 'stroke', customStyle && customStyle.stroke ? customStyle.stroke : RectShapeStyle.stroke);
 	shape.setAttributeNS(null, 'stroke-width', customStyle && customStyle.strokeWidth ? customStyle.strokeWidth : RectShapeStyle.strokeWidth);
 	shape.setAttributeNS(null, 'fill', customStyle && customStyle.fill ? customStyle.fill : RectShapeStyle.fill);
 	shape.setAttributeNS(null, 'opacity', customStyle && customStyle.opacity ? customStyle.opacity : RectShapeStyle.opacity);
 
 	return shape;
+}
+
+function drawText(customStyle) {
+	let text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+	text.setAttributeNS(null, 'shape-type', 'text');
+	text.setAttribute('id', customStyle.id ? customStyle.id : 'text_' + genUniqueID);
+	text.setAttribute('class', TextShapeStyle.class);
+	text.setAttributeNS(null, 'font-size', customStyle.fontSize ? customStyle.fontSize : TextShapeStyle.fontSize);
+	text.setAttributeNS(null, 'fill', customStyle.fill ? customStyle.fill : TextShapeStyle.fill);
+	text.setAttributeNS(null, 'x', customStyle.x ? customStyle.x : TextShapeStyle.x);
+	text.setAttributeNS(null, 'y', customStyle.y ? customStyle.y : TextShapeStyle.y);
+	text.textContent = customStyle.content ? customStyle.content : TextShapeStyle.content;
+
+	return text;
 }
 
 function createConnectingLine(startPoint, endPoint, source, target, customStyle) {

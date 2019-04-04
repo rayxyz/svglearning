@@ -691,9 +691,24 @@ function getConnectingAnchorPoint(shapeType, connectingAnchorPoints, posid) {
 }
 
 function updateLines(shape, lines) {
-	// TODO 
-	// Only update the lines related to shape
-	//
+	if (!lines || !lines.length || lines.length == 0) return;
+	let linesInvolved = lines;
+
+	// Only update the lines related to shape if the shape is not null
+	if (shape) {
+		linesInvolved = [];
+		let shapeId = shape.getAttributeNS(null, 'id');
+		for (let i = 0; i < lines.length; i++) {
+			let sourceId = lines[i].source.getAttributeNS(null, 'id');
+			let targetId = lines[i].target.getAttributeNS(null, 'id');
+			if (sourceId == shapeId || targetId == shapeId) {
+				linesInvolved.push(lines[i]);
+			}
+		}
+	}
+
+	if (linesInvolved.length == 0) return;
+	lines = linesInvolved;
 
 	for (let i = 0; i < lines.length; i++) {
 		if (!lines[i].startPoint || !lines[i].endPoint) {
@@ -797,25 +812,19 @@ function makeDraggable(svg, args) {
 				eleIdList.push(bboxedElements[i].getAttributeNS(null, 'id'));
 			}
 
-			let counterOfDeletedLines = 0;
-			console.log('lines: ', lines);
-			for (let i = 0; i < lines.length; i++) {
+			// Remove the involved elements and free memory.
+			for (let i = lines.length - 1; i >= 0; i--) {
+				let lineId = lines[i].getAttributeNS(null, 'id');
+				let sourceId = lines[i].source.getAttributeNS(null, 'id');
+				let targetId = lines[i].target.getAttributeNS(null, 'id');
 				for (let j = 0; j < eleIdList.length; j++) {
-					if (eleIdList[j] == lines[i].source.getAttributeNS(null, 'id') ||
-						eleIdList[j] == lines[i].target.getAttributeNS(null, 'id')) {
-						// Remove element from document tree.
+					if (eleIdList[j] == lineId // For the line itself
+						|| eleIdList[j] == sourceId || eleIdList[j] == targetId) {
 						lines[i].remove();
-						// Remove from memory:
-						// i: index to remove, 1: remove only one element.
-						// Don't use it, because it will affect then length of the lines in looping,
-						// use the delete key word and a counter indstead.
-						// lines.splice(i, 1);
-						// delete lines[i]; // Free memory
-						counterOfDeletedLines++; // Store the number of lines deleted
+						lines.splice(i, 1);
 					}
 				}
 			}
-			// lines.length -= counterOfDeletedLines;
 
 			removeBboxedElements(bboxedElements);
 		}
